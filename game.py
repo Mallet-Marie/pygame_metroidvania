@@ -8,11 +8,12 @@ from settings import *
 class Game():
     def __init__(self):
         pg.init()
-        self.GAME_W, self.GAME_H = 512, 288
+        self.GAME_W, self.GAME_H = WIDTH, HEIGHT
         self.sizes = pg.display.get_desktop_sizes()
-        self.SCREEN_W, self.SCREEN_H = self.sizes[0]
+        self.SCREEN_W, self.SCREEN_H = WIDTH, HEIGHT
         self.game_canvas = pg.Surface((self.GAME_W, self.GAME_H))
-        self.screen = pg.display.set_mode((self.SCREEN_W, self.SCREEN_H), pg.NOFRAME)
+        self.screen = pg.display.set_mode((self.SCREEN_W, self.SCREEN_H))
+        #add noframe and change to fullscreen self.sizes[0]
         self.running, self.playing = True, True
         self.actions = {"left": False, "right": False, "up" : False, "down" : False, "action1" : False, "action2" : False, "start" : False}
         self.dt, self.prev_time = 0, 0

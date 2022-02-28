@@ -8,18 +8,31 @@ class Player(pg.sprite.Sprite):
         self.game = game
         self.load_sprites()
         self.posx, self.posy = 200, 200
+        self.rect = self.cur_img.get_rect()
+        self.rect.centerx, self.rect.centery = self.posx, self.posy
+        self.dy = 1
+        self.dx = 0
+        self.falling = True
+        self.is_jumping = False
         self.current_frame, self.last_frame_update = 0, 0
 
     def jump(self):
         pass
 
     def update(self, dt, actions):
-        dx = actions["right"] - actions["left"]
+        self.dx = actions["right"] - actions["left"]
         if actions['up']:
-            self.jump()
-        self.posx += 100 * dt * dx
+            self.is_jumping = True
+        elif self.falling:
+            self.dy = 1
 
-        self.animate(dt, dx)
+        if self.is_jumping:
+            self.dy = -1
+        self.posx += 100 * dt * self.dx
+        self.posy += 100 * dt * self.dy
+        self.animate(dt, self.dx)
+        self.rect.centerx = self.posx
+        self.rect.centery = self.posy
     
     def render(self, display):
         display.blit(self.cur_img, (self.posx, self.posy))
@@ -47,10 +60,25 @@ class Player(pg.sprite.Sprite):
         self.front_sprites, self.back_sprites, self.right_sprites, self.left_sprites = [], [], [], []
 
         for i in range(1, 5):
-            self.front_sprites.append(pg.image.load(path.join(self.sprite_dir, "player_front" + str(i) + ".png")))
-            self.back_sprites.append(pg.image.load(path.join(self.sprite_dir, "player_back" + str(i) + ".png")))
+            self.front_sprites.append(pg.transform.scale2x(pg.image.load(path.join(self.sprite_dir, "player_front" + str(i) + ".png"))))
+            self.back_sprites.append(pg.transform.scale2x(pg.image.load(path.join(self.sprite_dir, "player_back" + str(i) + ".png"))))
             self.right_sprites.append(pg.transform.scale2x(pg.image.load(path.join(self.sprite_dir, "player_right" + str(i) + ".png"))))
             self.left_sprites.append(pg.transform.scale2x(pg.image.load(path.join(self.sprite_dir, "player_left" + str(i) + ".png"))))
             
         self.cur_img = self.front_sprites[0]
         self.cur_anim_list = self.front_sprites
+
+class Floor(pg.sprite.Sprite):
+    def __init__(self, game):
+        pg.sprite.Sprite.__init__(self)
+        self.game = game
+        self.image = pg.Surface((WIDTH*2, 50))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.center = (0, HEIGHT-50)
+
+    def render(self, display):
+        display.blit(self.image, self.rect.center)
+
+    def update(self):
+        pass

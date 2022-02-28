@@ -1,3 +1,6 @@
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 FPS = 30
+WIDTH = 512
+HEIGHT = 288
