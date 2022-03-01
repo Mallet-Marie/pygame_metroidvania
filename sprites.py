@@ -10,9 +10,6 @@ class Player(pg.sprite.Sprite):
         self.posx, self.posy = 200, 200
         self.rect = self.cur_img.get_rect()
         self.rect.centerx, self.rect.centery = self.posx, self.posy
-        self.dy = 1
-        self.dx = 0
-        self.falling = True
         self.is_jumping = False
         self.current_frame, self.last_frame_update = 0, 0
 
@@ -23,13 +20,8 @@ class Player(pg.sprite.Sprite):
         self.dx = actions["right"] - actions["left"]
         if actions['up']:
             self.is_jumping = True
-        elif self.falling:
-            self.dy = 1
 
-        if self.is_jumping:
-            self.dy = -1
         self.posx += 100 * dt * self.dx
-        self.posy += 100 * dt * self.dy
         self.animate(dt, self.dx)
         self.rect.centerx = self.posx
         self.rect.centery = self.posy
@@ -67,18 +59,3 @@ class Player(pg.sprite.Sprite):
             
         self.cur_img = self.front_sprites[0]
         self.cur_anim_list = self.front_sprites
-
-class Floor(pg.sprite.Sprite):
-    def __init__(self, game):
-        pg.sprite.Sprite.__init__(self)
-        self.game = game
-        self.image = pg.Surface((WIDTH*2, 50))
-        self.image.fill(RED)
-        self.rect = self.image.get_rect()
-        self.rect.center = (0, HEIGHT-50)
-
-    def render(self, display):
-        display.blit(self.image, self.rect.center)
-
-    def update(self):
-        pass
