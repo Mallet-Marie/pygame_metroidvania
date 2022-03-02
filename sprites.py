@@ -7,27 +7,40 @@ class Player(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         self.game = game
         self.load_sprites()
-        self.posx, self.posy = 200, 200
         self.rect = self.cur_img.get_rect()
-        self.rect.centerx, self.rect.centery = self.posx, self.posy
+        self.rect.centerx, self.rect.centery = 200, 200
         self.is_jumping = False
         self.current_frame, self.last_frame_update = 0, 0
+        self.velx = 0
+        self.vely = 400 * self.game.dt
 
     def jump(self):
         pass
 
     def update(self, dt, actions):
         self.dx = actions["right"] - actions["left"]
-        if actions['up']:
+        if actions['up'] and not self.is_jumping:
             self.is_jumping = True
 
-        self.posx += 100 * dt * self.dx
+        if self.is_jumping:
+            if self.vely == 0:
+                self.vely = -400 * dt
+            else:
+                self.vely += 50 * dt
+            
+            if self.vely > 400 * dt:
+                self.is_jumping = False
+        
+        if self.rect.centery >= HEIGHT -50 and not self.is_jumping:
+            self.vely = 0
+        print(self.vely)
+        self.velx = 200 * dt * self.dx
+        self.rect.centerx += self.velx
+        self.rect.centery += self.vely
         self.animate(dt, self.dx)
-        self.rect.centerx = self.posx
-        self.rect.centery = self.posy
     
     def render(self, display):
-        display.blit(self.cur_img, (self.posx, self.posy))
+        display.blit(self.cur_img, (self.rect.centerx, self.rect.centery))
 
     def animate(self, dt, dx):
         self.last_frame_update += dt
