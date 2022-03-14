@@ -3,10 +3,10 @@ class State():
         self.game = game
         self.prev_state = None
 
-    def update(self, dt, actions):
+    def update(self, dt, inputs):
         pass
     
-    def render(self, surface):
+    def draw(self, surface):
         pass
 
     def enter_state(self):

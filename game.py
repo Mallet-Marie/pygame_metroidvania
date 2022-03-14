@@ -1,5 +1,4 @@
-import time
-import pygame as pg
+import pygame
 from pygame.constants import *
 from os import path
 from states.title import Title
@@ -7,100 +6,95 @@ from settings import *
 
 class Game():
     def __init__(self):
-        pg.init()
-        self.GAME_W, self.GAME_H = WIDTH, HEIGHT
-        self.sizes = pg.display.get_desktop_sizes()
+        pygame.init()
+        self.sizes = pygame.display.get_desktop_sizes()
         self.SCREEN_W, self.SCREEN_H = self.sizes[0]
-        self.game_canvas = pg.Surface((self.GAME_W, self.GAME_H))
-        self.screen = pg.display.set_mode((self.SCREEN_W, self.SCREEN_H), pg.NOFRAME)
-        #add noframe and change to fullscreen self.sizes[0]
+        self.canvas = pygame.Surface((WIDTH, HEIGHT))
+        self.screen = pygame.display.set_mode((self.SCREEN_W, self.SCREEN_H), pygame.NOFRAME)
         self.running, self.playing = True, True
-        self.actions = {"left": False, "right": False, "up" : False, "down" : False, "action1" : False, "action2" : False, "start" : False}
-        self.dt, self.prev_time = 0, 0
+        self.inputs = {"left": False, "right": False, "up": False, "down": False, "space": False, "enter": False, "back": False}
         self.state_stack = []
         self.load_assets()
         self.load_states()
-        self.clock = pg.time.Clock()
+        self.clock = pygame.time.Clock()
 
     def game_loop(self):
         while self.playing:
-            self.clock.tick(FPS)
             self.get_dt()
             self.get_events()
             self.update()
-            self.render()
+            self.draw()
 
     def get_events(self):
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                self.playing, self.running = False, False
-            if event.type == pg.KEYDOWN:
+        for event in pygame.event.get():
+            # check for closing window
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == pygame.KEYDOWN:
                 if event.key == K_ESCAPE:
-                    self.playing, self.running = False, False
-                if event.key == K_a:
-                    self.actions['left'] = True
+                    self.running = False
+                    self.playing = False
                 if event.key == K_d:
-                    self.actions['right'] = True
-                if event.key == K_w:
-                    self.actions['up'] = True
-                if event.key == K_s:
-                    self.actions['down'] = True
-                if event.key == K_p:
-                    self.actions['action1'] = True
-                if event.key == K_o:
-                    self.actions['action2'] = True
-                if event.key == K_RETURN:
-                    self.actions['start'] = True
-            if event.type == pg.KEYUP:
+                    self.inputs["right"] = True
                 if event.key == K_a:
-                    self.actions['left'] = False
-                if event.key == K_d:
-                    self.actions['right'] = False
+                    self.inputs["left"] = True
                 if event.key == K_w:
-                    self.actions['up'] = False
+                    self.inputs["up"] = True
                 if event.key == K_s:
-                    self.actions['down'] = False
-                if event.key == K_p:
-                    self.actions['action1'] = False
-                if event.key == K_o:
-                    self.actions['action2'] = False
+                    self.inputs["down"] = True
+                if event.key == K_SPACE:
+                    self.inputs["space"] = True
                 if event.key == K_RETURN:
-                    self.actions['start'] = False
+                    self.inputs["enter"] = True
+                if event.key == K_BACKSPACE:
+                    self.inputs["back"] = True
+            if event.type == pygame.KEYUP:
+                if event.key == K_d:
+                    self.inputs["right"] = False
+                if event.key == K_a:
+                    self.inputs["left"] = False
+                if event.key == K_w:
+                    self.inputs["up"] = False
+                if event.key == K_s:
+                    self.inputs["down"] = False
+                if event.key == K_SPACE:
+                    self.inputs["space"] = False
+                if event.key == K_RETURN:
+                    self.inputs["enter"] = False
+                if event.key == K_BACKSPACE:
+                    self.inputs["back"] = False
     
     def update(self):
-        self.state_stack[-1].update(self.dt, self.actions)
+        self.state_stack[-1].update(self.dt, self.inputs)
 
-    def render(self):
-        self.state_stack[-1].render(self.game_canvas)
-        self.screen.blit(pg.transform.scale(self.game_canvas, (self.SCREEN_W, self.SCREEN_H)), (0, 0))
-        pg.display.flip()
+    def draw(self):
+        self.state_stack[-1].draw(self.canvas)
+        self.screen.blit(pygame.transform.scale(self.canvas, (self.SCREEN_W, self.SCREEN_H)), (0, 0))
+        pygame.display.flip()
+
+    def load_assets(self):
+        self.assets_dir = path.join("assets")
+        self.font_dir = path.join(self.assets_dir, "font")
 
     def get_dt(self):
-        now = time.time()
-        self.dt = now - self.prev_time
-        self.prev_time = now
+        self.dt = self.clock.tick(FPS) * 0.001 * FPS
     
     def draw_text(self, surface, text, size, colour, x, y):
-        self.font = pg.font.Font(path.join(self.font_dir, "Minecraft.ttf"), size)
+        self.font = pygame.font.Font(path.join(self.font_dir, "Minecraft.ttf"), size)
         text_surface = self.font.render(text, True, colour)
         text_rect = text_surface.get_rect()
         text_rect.center = (x, y)
         surface.blit(text_surface, text_rect)
-    
-    def load_assets(self):
-        self.assets_dir = path.join("assets")
-        self.sprite_dir = path.join(self.assets_dir, "sprites")
-        self.font_dir = path.join(self.assets_dir, "font")
     
     def load_states(self):
         self.title_screen = Title(self)
         self.state_stack.append(self.title_screen)
 
     def reset_keys(self):
-        for action in self.actions:
-            self.actions[action] = False
+        for input in self.inputs:
+            self.inputs[input] = False
         
 game = Game()
 while game.running:
     game.game_loop()
-pg.quit()
+pygame.quit()

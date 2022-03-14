@@ -1,22 +1,74 @@
-import pygame as pg
+import pygame
 from os import path
-from states.state import State
-from settings import *
+from states.state import State 
 from states.pause import PauseMenu
+from settings import *
 from sprites import *
 
 class World(State):
     def __init__(self, game):
         State.__init__(self, game)
-        self.grass_img = pg.image.load(path.join(self.game.assets_dir, "map", "landscape1.png"))
-        self.player = Player(self.game)
+        self.game = game
+        self.all_sprites = pygame.sprite.Group()
+        self.dependants = pygame.sprite.Group()
+        self.mobs = pygame.sprite.Group()
+        self.attacks = pygame.sprite.Group()
+        self.mob_attacks = pygame.sprite.Group()
+        self.mob_melee = pygame.sprite.Group()
+        self.player = Player(self)
+        self.mob = Mob(self)
+        self.mobs.add(self.mob)
+        self.dependants.add(self.player)
+        self.all_sprites.add(self.player)
+        self.all_sprites.add(self.mob)
 
-    def update(self, dt, actions):
-        if actions["start"]:
+    def collide_hitbox(self, left, right):
+        return left.hitbox.colliderect(right.hitbox)
+
+    def collide_circle_hitbox(self, left, right):
+        return left.hitbox.collide_circle(right.hitbox)
+    
+    def collide_circle_rect(self, right, left):
+        circle_distance_x = abs(right.hitbox.centerx-left.hitbox.centerx)
+        circle_distance_y = abs(right.hitbox.centery-left.hitbox.centery)
+        if circle_distance_x > left.hitbox.w/2.0+right.radius or circle_distance_y > left.hitbox.h/2.0+right.radius:
+            return False
+        if circle_distance_x <= left.hitbox.w/2.0 or circle_distance_y <= left.hitbox.h/2.0:
+            return True
+        corner_x = circle_distance_x-left.hitbox.w/2.0
+        corner_y = circle_distance_y-left.hitbox.h/2.0
+        corner_distance_sq = corner_x**2.0 +corner_y**2.0
+        return corner_distance_sq <= right.radius**2.0
+
+    def update(self, dt, inputs):
+        self.dt = dt
+        if inputs["enter"]:
             new_state = PauseMenu(self.game)
             new_state.enter_state()
-        self.player.update(dt, actions)
+        self.dependants.update(self.dt, inputs)
+        self.mob_attacks.update(self.dt)
+        self.mobs.update()
+        sword_hits = pygame.sprite.groupcollide(self.attacks, self.mobs, False, True, self.collide_circle_rect)
+        player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False, self.collide_hitbox)
+        if player_hits:
+            self.player.kill()
+            self.game.playing = False
+            self.game.running = False
+            pass
+        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, True)
+      #  for hit in mob_hits:
+       #     self.player.kill()
+        #    self.game.playing = False
+        #    self.game.running = False
+        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, True)
+        for hit in mob_melee_hits:
+            self.player.kill()
+            self.game.playing = False
+            self.game.running = False
+        parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, True, True, pygame.sprite.collide_circle)
+        mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
 
-    def render(self, display):
-        display.blit(self.grass_img, (0, 0))
-        self.player.render(display)
+    def draw(self, display):
+        display.fill(WHITE) # Erase screen/draw background
+        # *after* drawing everything, flip the display
+        self.all_sprites.draw(display)
