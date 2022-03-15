@@ -1,52 +1,71 @@
 import pygame
 from os import path
 from states.state import State
-from states.party import PartyMenu
+from states.options import Options
 from settings import *
 
 class PauseMenu(State):
     def __init__(self, game):
         State.__init__(self, game)
         self.game = game
-        self.menu_img = pygame.image.load(path.join(self.game.assets_dir, "map", "menu.png"))
-        self.menu_rect = self.menu_img.get_rect()
-        self.menu_rect.center = (WIDTH*.85, HEIGHT*.4)
-        self.menu_options = {0: "Party", 1: "Items", 2: "Magic", 3: "Exit"}
         self.index = 0
-        
-        self.cursor_img = pygame.image.load(path.join(self.game.assets_dir, "map", "cursor.png"))
-        self.cursor_rect = self.cursor_img.get_rect()
-        self.cursor_posy = self.menu_rect.y + 38
-        self.cursor_rect.x, self.cursor_rect.y = self.menu_rect.x + 10, self.cursor_posy
-
+        self.buttons = pygame.sprite.Group()
+        self.start_button = Button(self.game, WIDTH/4, 80, "continue.png","continue")
+        self.options_button = Button(self.game, WIDTH/4, 180, "options.png", "options")
+        self.quit_button = Button(self.game, WIDTH/4, 280, "quit.png", "quit")
+        self.buttons.add(self.start_button)
+        self.buttons.add(self.options_button)
+        self.buttons.add(self.quit_button)
+        self.mouse = Mouse(game)
+        self.hovered = None
+    
     def update(self, dt, inputs):
-        self.update_cursor(inputs)
-        if inputs["space"]:
-            self.transition_state()
-        if inputs["back"]:
-            self.exit_state()
+        self.mouse.update()
+        hovers = pygame.sprite.spritecollide(self.mouse, self.buttons, False)
+        self.hovered = None
+        for hover in hovers:
+            self.hovered = hover
+            pressed = pygame.mouse.get_pressed()
+            if pressed[0]:
+                if hover.key == "continue":
+                    self.exit_state()
+                elif hover.key == "options":
+                    new_state = Options(self.game)
+                    new_state.enter_state()
+                elif hover.key == "quit":
+                    self.game.running = False
+                    self.game.playing = False
         self.game.reset_keys()
+
 
     def draw(self, display):
         self.prev_state.draw(display)
-        display.blit(self.menu_img, self.menu_rect)
-        display.blit(self.cursor_img, self.cursor_rect) 
+        self.buttons.draw(display)
+        if self.hovered:
+            display.blit(self.hovered.fade, self.hovered.rect)
+        display.blit(self.mouse.image, self.mouse.rect)
+    
+class Button(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, img, key):
+        pygame.sprite.Sprite.__init__(self)
+        self.game = game
+        self.key = key
+        self.image = pygame.image.load(path.join(self.game.assets_dir, img)).convert()
+        self.fade = pygame.Surface((120, 60))
+        self.fade.set_alpha(100)
+        self.fade.fill(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
 
-    def update_cursor(self, inputs):
-        if inputs["down"]:
-            self.index = (self.index+1) % len(self.menu_options)
-        elif inputs["up"]:
-            self.index = (self.index-1) % len(self.menu_options)
-        self.cursor_rect.y = self.cursor_posy + (self.index*32)
-
-    def transition_state(self):
-        if self.menu_options[self.index] == "Party":
-            new_state = PartyMenu(self.game)
-            new_state.enter_state()
-        elif self.menu_options[self.index] == "Items":
-            pass
-        elif self.menu_options[self.index] == "Magic":
-            pass
-        elif self.menu_options[self.index] == "Exit":
-            while len(self.game.state_stack) > 1:
-                self.game.state_stack.pop()
+class Mouse(pygame.sprite.Sprite):
+    def __init__(self, game):
+        self.game = game
+        pygame.mouse.set_visible(False)
+        self.image = pygame.image.load(path.join(self.game.assets_dir, "kunai.png")).convert()
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        pygame.mouse.set_pos(WIDTH/2, HEIGHT/2)
+        self.rect.center = (WIDTH/2, HEIGHT/2)
+    
+    def update(self):
+        self.rect.center = pygame.mouse.get_pos()

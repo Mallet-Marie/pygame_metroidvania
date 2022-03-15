@@ -1,6 +1,7 @@
 import pygame
 from states.state import State
 from states.world import World
+from states.options import Options
 from settings import *
 from os import path
 
@@ -30,6 +31,9 @@ class MainMenu(State):
             if pressed[0]:
                 if hover.key == "start":
                     new_state = World(self.game)
+                    new_state.enter_state()
+                elif hover.key == "options":
+                    new_state = Options(self.game)
                     new_state.enter_state()
                 elif hover.key == "quit":
                     self.game.running = False
