@@ -16,10 +16,10 @@ class World(State):
         self.mob_attacks = pygame.sprite.Group()
         self.mob_melee = pygame.sprite.Group()
         self.player = Player(self)
-        self.mob = Ninja(self)
+        self.mob = Ninja(self, 0)
         self.mobs.add(self.mob)
         self.all_sprites.add(self.mob)
-        self.mob = Samurai(self)
+        self.mob = Ninja(self, 1)
         self.mobs.add(self.mob)
         self.all_sprites.add(self.mob)
         self.dependants.add(self.player)
@@ -58,22 +58,19 @@ class World(State):
         if not self.player.invincible:
             for hit in mob_melee_hits:
                 self.player.health -= 1
-                if self.player.health <= 0:
-                    self.player.kill()
-                    self.game.playing = False
-                    self.game.running = False
+                self.player.iframe()
             for hit in mob_hits:
                 self.player.health -= 1
-                if self.player.health <= 0:
-                    self.player.kill()
-                    self.game.playing = False
-                    self.game.running = False
+                self.player.iframe()
             if player_hits:
                 self.player.health -= 1
-                if self.player.health <= 0:
-                    self.player.kill()
-                    self.game.playing = False
-                    self.game.running = False
+                self.player.iframe()
+
+            if self.player.health <= 0:
+                self.exit_state()
+                #self.player.kill()
+                #self.game.playing = False
+                #self.game.running = False
 
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, True, True, pygame.sprite.collide_circle)
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
