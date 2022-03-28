@@ -8,7 +8,7 @@ class Game():
     def __init__(self):
         pygame.init()
         self.sizes = pygame.display.get_desktop_sizes()
-        self.SCREEN_W, self.SCREEN_H = self.sizes[0]
+        self.SCREEN_W, self.SCREEN_H = WIDTH, HEIGHT #self.sizes[0]
         self.canvas = pygame.Surface((WIDTH, HEIGHT))
         self.screen = pygame.display.set_mode((self.SCREEN_W, self.SCREEN_H), pygame.NOFRAME)
         self.running, self.playing = True, True

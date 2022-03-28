@@ -27,7 +27,7 @@ class Player(pygame.sprite.Sprite):
         self.on_ground = False
         self.attacking = False
         self.invincible = False
-        self.hit = False
+        #self.hit = False
         self.been_hit = False
         self.hitbox = self.rect.copy()
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
@@ -93,7 +93,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = self.posx
         self.hitbox.x = self.posx
         self.horizontal_movement(tiles)
-
+       # if self.jumping:
+          #  print(self.rect.x)
         if self.inputs["up"] and not self.jumping and self.jumps > 0:
             self.jump()
             self.jumps -= 1
@@ -168,7 +169,7 @@ class Shuriken(pygame.sprite.Sprite):
         self.hitbox.center = self.rect.center
 
 class Ninja(pygame.sprite.Sprite):
-    def __init__(self, game, type, pos):
+    def __init__(self, game, type, pos, points):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
         self.type = type
@@ -200,9 +201,21 @@ class Ninja(pygame.sprite.Sprite):
         self.vely = 0
         self.acc = .5
         self.health = 2
+        self.invincible = False
+        #self.hit = False
+        self.been_hit = False
+        self.fleeing = False
+        self.points = points
+        self.iframes = pygame.time.get_ticks()
         self.facing_left, self.facing_right = True, False
         self.dirx = 0
-    
+        self.jumping = False
+
+    def iframe(self):
+        self.been_hit = True
+        self.iframes = pygame.time.get_ticks()
+        self.invincible = True
+
     def throw(self): #type 0
         now = pygame.time.get_ticks()
         if now - self.last_throw > self.throw_interval:
@@ -231,24 +244,34 @@ class Ninja(pygame.sprite.Sprite):
                 self.vely = 0
                 self.posy = hits[0].rect.bottom
                 self.rect.y = self.posy
+    
+    def jump(self):
+        self.jumping = True
+        self.vely -= 10.2
 
     def update(self, dt, tiles):
+        if self.fleeing:
+            if self.points[2]["cx"] * 8 < self.rect.x:
+                self.dx = -1
+            elif self.points[2]["cx"] * 8 > self.rect.x:
+                self.dx = 1
+            else:
+                self.dx = 0
+            if (abs(self.rect.x - self.points[2]["cx"]*8)) <= 170 and self.rect.y - self.points[2]["cy"]*8 > 64 and not self.jumping:
+                self.jump()
+            #else:
+                #self.jumping = False
+                #self.fleeing = False
+        self.velx = self.dx * 4 * dt
         if self.health <= 0:
             self.kill()
-        self.dx = self.game.player.rect.centerx - self.rect.centerx
-        self.dy = self.game.player.rect.centery - self.rect.centery
-        self.dirx = self.facing_right - self.facing_left
         self.vely += self.acc*.9 *dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))
         self.rect.y = self.posy
         self.hitbox.y = self.posy
+        if self.invincible and pygame.time.get_ticks() - self.iframes > 500:
+            self.invincible = False
         self.vertical_collisions(tiles)
-        if self.dx < 0 and self.facing_right:
-            self.facing_left = True
-            self.facing_right = False
-        elif self.dx > 0 and self.facing_left:
-            self.facing_right = True
-            self.facing_left = False
 
         if self.type == 0:
             if (abs(self.dx) <= 400 and abs(self.dy) <= 300) and (abs(self.dx) >= 100 and abs(self.dy) >= 75):
@@ -260,9 +283,9 @@ class Ninja(pygame.sprite.Sprite):
                 self.attack()
             if self.attacking:
                 self.sword.update(self.posx-16, self.posy+8, self)
-            self.posx += self.velx
-        self.rect.centerx = self.posx
-        self.hitbox.centerx = self.rect.centerx
+        self.posx += self.velx
+        self.rect.x = self.posx
+        self.hitbox.x = self.rect.x
 
 class Samurai(pygame.sprite.Sprite):
     def __init__(self, game, pos):
