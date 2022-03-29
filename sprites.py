@@ -188,14 +188,9 @@ class Ninja(pygame.sprite.Sprite):
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.center
         self.hitbox.center = self.posx - 1, self.posy + 3
-        if self.type == 0: #ranged
-            self.throw_interval = 2000
-            self.last_throw = pygame.time.get_ticks()
-        elif self.type == 1: #melee
-            self.swing_interval = 2000
-            self.last_swing = pygame.time.get_ticks()
-            self.attacking = False
+        self.attacking = False
         self.dx, self.dy = 0, 0
+        self.dx_sword = 0
         self.rot = 0
         self.velx = 0
         self.vely = 0
@@ -206,6 +201,8 @@ class Ninja(pygame.sprite.Sprite):
         self.been_hit = False
         self.fleeing = False
         self.points = points
+        self.next_point = random.randint(1, 2)
+        print(self.next_point)
         self.iframes = pygame.time.get_ticks()
         self.facing_left, self.facing_right = True, False
         self.dirx = 0
@@ -216,6 +213,12 @@ class Ninja(pygame.sprite.Sprite):
         self.iframes = pygame.time.get_ticks()
         self.invincible = True
 
+    def attack(self):
+        self.attacking = True
+        self.sword = Sword(self.posx+64, self.posy+32, 96, 8, 0)
+        self.game.mob_melee.add(self.sword)
+        self.game.all_sprites.add(self.sword)
+
     def throw(self): #type 0
         now = pygame.time.get_ticks()
         if now - self.last_throw > self.throw_interval:
@@ -223,15 +226,6 @@ class Ninja(pygame.sprite.Sprite):
             shuriken = Shuriken(self.rect.centerx, self.rect.centery, self.rot)
             self.game.all_sprites.add(shuriken)
             self.game.mob_attacks.add(shuriken)
-    
-    def attack(self): #type 1
-        now = pygame.time.get_ticks()
-        if now - self.last_swing > self.swing_interval:
-            self.last_swing = now
-            self.attacking = True
-            self.sword = Sword(self.posx-32, self.posy+8, 84, 8, 0)
-            self.game.mob_melee.add(self.sword)
-            self.game.all_sprites.add(self.sword)
 
     def vertical_collisions(self, tiles):
         hits = pygame.sprite.spritecollide(self, tiles, False)
@@ -247,21 +241,27 @@ class Ninja(pygame.sprite.Sprite):
     
     def jump(self):
         self.jumping = True
-        self.vely -= 10.2
+        self.vely -= 10.3
 
     def update(self, dt, tiles):
         if self.fleeing:
-            if self.points[2]["cx"] * 8 < self.rect.x:
+            if self.points[self.next_point]["cx"] * 8 < self.rect.x:
                 self.dx = -1
-            elif self.points[2]["cx"] * 8 > self.rect.x:
+            elif self.points[self.next_point]["cx"] * 8 > self.rect.x:
                 self.dx = 1
             else:
                 self.dx = 0
-            if (abs(self.rect.x - self.points[2]["cx"]*8)) <= 170 and self.rect.y - self.points[2]["cy"]*8 > 64 and not self.jumping:
+            if (abs(self.rect.x - self.points[self.next_point]["cx"]*8)) <= 170 and self.rect.y - self.points[self.next_point]["cy"]*8 > 64 and not self.jumping:
                 self.jump()
             #else:
                 #self.jumping = False
                 #self.fleeing = False
+
+        if self.rect.x < self.game.player.rect.x:
+            self.dx_sword = 1
+        elif self.rect.x > self.game.player.rect.x:
+            self.dx_sword = -1
+                
         self.velx = self.dx * 4 * dt
         if self.health <= 0:
             self.kill()
@@ -277,12 +277,11 @@ class Ninja(pygame.sprite.Sprite):
             if (abs(self.dx) <= 400 and abs(self.dy) <= 300) and (abs(self.dx) >= 100 and abs(self.dy) >= 75):
                 self.rot = math.atan2(self.dy, self.dx)
                 self.throw()
-        elif self.type == 1:
-            self.velx = self.dirx * dt * 2
-            if (abs(self.dx) <= 100 and abs(self.dy) <= 50):
-                self.attack()
-            if self.attacking:
-                self.sword.update(self.posx-16, self.posy+8, self)
+        if self.attacking:
+            self.sword.update(self.posx+64, self.posy+32, self)
+            if self.sword.finished:
+                self.attacking = False
+
         self.posx += self.velx
         self.rect.x = self.posx
         self.hitbox.x = self.rect.x

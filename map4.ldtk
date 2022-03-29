@@ -257,53 +257,27 @@
 						},
 						{
 							"__identifier": "Ninja",
-							"__grid": [111,31],
+							"__grid": [37,22],
 							"__pivot": [0,0],
 							"__tile": { "tilesetUid": 2, "srcRect": [64,0,64,64] },
 							"width": 64,
 							"height": 64,
 							"defUid": 5,
-							"px": [888,248],
+							"px": [296,176],
 							"fieldInstances": [{
 								"__identifier": "Point",
-								"__value": [ { "cx": 73, "cy": 31 }, { "cx": 36, "cy": 22 }, { "cx": 85, "cy": 19 } ],
+								"__value": [ { "cx": 37, "cy": 22 }, { "cx": 86, "cy": 19 }, { "cx": 86, "cy": 31 } ],
 								"__type": "Array<Point>",
 								"defUid": 9,
 								"realEditorValues": [ {
 									"id": "V_String",
-									"params": ["73,31"]
+									"params": ["37,22"]
 								}, {
 									"id": "V_String",
-									"params": ["36,22"]
+									"params": ["86,19"]
 								}, {
 									"id": "V_String",
-									"params": ["85,19"]
-								} ]
-							}]
-						},
-						{
-							"__identifier": "Ninja",
-							"__grid": [148,31],
-							"__pivot": [0,0],
-							"__tile": { "tilesetUid": 2, "srcRect": [64,0,64,64] },
-							"width": 64,
-							"height": 64,
-							"defUid": 5,
-							"px": [1184,248],
-							"fieldInstances": [{
-								"__identifier": "Point",
-								"__value": [ { "cx": 85, "cy": 19 }, { "cx": 38, "cy": 22 }, { "cx": 174, "cy": 19 } ],
-								"__type": "Array<Point>",
-								"defUid": 9,
-								"realEditorValues": [ {
-									"id": "V_String",
-									"params": ["85,19"]
-								}, {
-									"id": "V_String",
-									"params": ["38,22"]
-								}, {
-									"id": "V_String",
-									"params": ["174,19"]
+									"params": ["86,31"]
 								} ]
 							}]
 						}

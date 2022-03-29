@@ -143,9 +143,10 @@ class World(State):
                 hit.fleeing = True
                 hit.health -= 1
                 hit.iframe()
+                hit.attack()
         player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
-        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, True)
-        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, True)
+        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, False)
+        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False)
         if not self.player.invincible:
             for hit in mob_melee_hits:
                 self.player.health -= 1
