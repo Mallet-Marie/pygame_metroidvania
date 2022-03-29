@@ -122,7 +122,7 @@ class World(State):
             else:
                 if id == "Ninja":
                     path_points = entity_data[i]["fieldInstances"][0]["__value"]
-                    sprite = Ninja(self, 0, pos, path_points)
+                    sprite = Ninja(self, pos, path_points)
                 elif id == "Samurai":
                     sprite = Samurai(self, pos)
                 self.all_sprites.add(sprite)
@@ -140,10 +140,10 @@ class World(State):
         sword_hits = pygame.sprite.groupcollide(self.mobs, self.attacks, False, False)
         for hit in sword_hits:
             if not hit.invincible:
-                hit.fleeing = True
                 hit.health -= 1
                 hit.iframe()
-                hit.attack()
+                hit.attack_time = pygame.time.get_ticks()
+                hit.should_attack = True
         player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
         mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, False)
         mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False)
