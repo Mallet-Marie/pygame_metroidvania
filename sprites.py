@@ -177,7 +177,7 @@ class Ninja(pygame.sprite.Sprite):
         #self.image = pygame.transform.flip(self.image, True, False)
         #self.image.set_colorkey(BLACK)
         #self.image = pygame.transform.scale2x(self.image)
-        self.image.fill(RED)
+        self.image.fill(BLACK)
         self.hitbox = self.image.get_rect()
         self.rect = self.image.get_rect()
         self.hitbox = self.hitbox.inflate(-35, -5)
@@ -302,8 +302,10 @@ class Samurai(pygame.sprite.Sprite):
     def __init__(self, game, pos):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
-        self.image = pygame.image.load(path.join(self.game.game.assets_dir, "samurai.png")).convert_alpha()
-        self.image = pygame.transform.flip(self.image, True, False)
+        #self.image = pygame.image.load(path.join(self.game.game.assets_dir, "samurai.png")).convert_alpha()
+        #self.image = pygame.transform.flip(self.image, True, False)
+        self.image = pygame.Surface((32, 64))
+        self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.hitbox = self.rect.copy()
         self.hitbox = self.hitbox.inflate(-35, -5)
@@ -318,10 +320,18 @@ class Samurai(pygame.sprite.Sprite):
         self.velx = 0
         self.acc = .5
         self.health = 4
+        self.invincible = False
+        self.patrol = True
+        self.seeking = False
+        self.attack_time = pygame.time.get_ticks()
+        self.should_attack = True
         self.dx = random.randint(-1, 1)
         while self.dx == 0:
             self.dx = random.randint(-1, 1)
     
+    def iframe(self):
+        pass
+
     def vertical_collisions(self, tiles):
         hits = pygame.sprite.spritecollide(self, tiles, False)
         if hits:
@@ -335,14 +345,30 @@ class Samurai(pygame.sprite.Sprite):
                 self.rect.y = self.posy
 
     def update(self, dt, tiles):
-        self.velx = dt * self.dx * 3.5
+        print(abs(self.rect.x - self.game.player.rect.x))
+        if abs(self.rect.x - self.game.player.rect.x) <= 150:
+            self.seeking = True
+            self.patrol = False
+        else:
+            if self.seeking:
+                self.patrol = True
+                self.seeking = False
+                self.bounds = (self.posx - 75, self.posx +75)
+
+        if self.patrol:
+            if self.rect.centerx <= self.bounds[0]:
+                self.dx = 1
+            elif self.rect.centerx >= self.bounds[1]:
+                self.dx = -1
+        elif self.seeking:
+            if self.rect.x - self.game.player.rect.x < 0:
+                self.dx = 1
+            else:
+                self.dx = -1
+        self.velx = dt * self.dx * 2.65
         self.posx += self.velx
         self.rect.centerx = self.posx
         self.hitbox.centerx = self.posx
-        if self.rect.centerx <= self.bounds[0]:
-            self.dx = 1
-        elif self.rect.centerx >= self.bounds[1]:
-            self.dx = -1
 
         self.vely += self.acc*.9 *dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))

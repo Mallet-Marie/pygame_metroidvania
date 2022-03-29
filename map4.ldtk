@@ -280,6 +280,17 @@
 									"params": ["86,31"]
 								} ]
 							}]
+						},
+						{
+							"__identifier": "Samurai",
+							"__grid": [107,31],
+							"__pivot": [0,0],
+							"__tile": { "tilesetUid": 2, "srcRect": [128,0,64,64] },
+							"width": 64,
+							"height": 64,
+							"defUid": 6,
+							"px": [856,248],
+							"fieldInstances": []
 						}
 					]
 				},

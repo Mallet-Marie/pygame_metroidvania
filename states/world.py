@@ -136,7 +136,6 @@ class World(State):
         self.dependants.update(self.dt, inputs, self.collision_tiles)
         self.mob_attacks.update(self.dt)
         self.mobs.update(self.dt, self.collision_tiles)
-        #self.tile_sprites.update(self.dt)
         sword_hits = pygame.sprite.groupcollide(self.mobs, self.attacks, False, False)
         for hit in sword_hits:
             if not hit.invincible:
@@ -160,9 +159,6 @@ class World(State):
 
             if self.player.health <= 0 or self.player.rect.bottom >= HEIGHT:
                 self.exit_state()
-                #self.player.kill()
-                #self.game.playing = False
-                #self.game.running = False
 
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, False, True, pygame.sprite.collide_circle)
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
@@ -181,5 +177,4 @@ class World(State):
         display.fill(WHITE)
         # *after* drawing everything, flip the display
         self.draw_health(display, 10, 10, self.player.health)
-        #self.tile_sprites.draw(display)
         self.all_sprites.custom_draw(display, self.player)
