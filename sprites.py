@@ -308,13 +308,15 @@ class Samurai(pygame.sprite.Sprite):
         self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.hitbox = self.rect.copy()
-        self.hitbox = self.hitbox.inflate(-35, -5)
-        self.hitbox = self.hitbox.move(-6, 3)
+        self.hitbox = self.hitbox.inflate(-64, 0)
+        #self.hitbox = self.hitbox.move(-6, 3)
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
         pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.center
         self.hitbox.center = (self.posx, self.posy)
+        self.attack_area = pygame.Rect(0, 0, 96, 80)
+        self.attack_area.center = self.rect.center
         self.bounds = (self.posx - 75, self.posx +75)
         self.vely = 0
         self.velx = 0
@@ -324,13 +326,25 @@ class Samurai(pygame.sprite.Sprite):
         self.patrol = True
         self.seeking = False
         self.attack_time = pygame.time.get_ticks()
-        self.should_attack = True
+        self.attack_delay = pygame.time.get_ticks()
+        self.should_attack = False
+        self.attacking = False
         self.dx = random.randint(-1, 1)
         while self.dx == 0:
             self.dx = random.randint(-1, 1)
     
     def iframe(self):
         pass
+    
+    def attack(self):
+        self.attack_time = pygame.time.get_ticks()
+        self.attacking = True
+        if self.dx == -1:
+            self.sword = Sword(self.rect.x, self.rect.y+8, 96, 96, 48)
+        elif self.dx == 1:
+            self.sword = Sword(self.rect.x+32, self.rect.y+8, 96, 96, 48)
+        self.game.mob_melee.add(self.sword)
+        self.game.all_sprites.add(self.sword)
 
     def vertical_collisions(self, tiles):
         hits = pygame.sprite.spritecollide(self, tiles, False)
@@ -345,7 +359,34 @@ class Samurai(pygame.sprite.Sprite):
                 self.rect.y = self.posy
 
     def update(self, dt, tiles):
-        print(abs(self.rect.x - self.game.player.rect.x))
+        hits = self.attack_area.colliderect(self.game.player.rect)
+        if hits and not self.attacking:
+            if not self.should_attack:
+                self.attack_delay = pygame.time.get_ticks()
+            self.should_attack = True
+        else:
+            self.should_attack = False
+
+        if self.attacking:
+            self.velx = dt * self.dx * 2.6
+            if self.dx == -1:
+                self.sword.update(self.rect.x, self.rect.y+8, self)
+            elif self.dx == 1:
+                self.sword.update(self.rect.x+32, self.rect.y+8, self)
+            if self.sword.finished:
+                now = pygame.time.get_ticks()
+                if now - self.attack_time > 1500:
+                    self.attacking = False
+
+        if self.should_attack:
+            self.velx = dt * self.dx * 1
+            if not self.attacking:
+                attack_delay = pygame.time.get_ticks()
+                if attack_delay - self.attack_delay > 100:
+                    self.attack()
+        else:
+            self.velx = dt * self.dx * 2.6
+        print(self.velx)
         if abs(self.rect.x - self.game.player.rect.x) <= 150:
             self.seeking = True
             self.patrol = False
@@ -361,13 +402,16 @@ class Samurai(pygame.sprite.Sprite):
             elif self.rect.centerx >= self.bounds[1]:
                 self.dx = -1
         elif self.seeking:
-            if self.rect.x - self.game.player.rect.x < 0:
+            if self.rect.x - self.game.player.rect.x < -5:
                 self.dx = 1
-            else:
+            elif self.rect.x - self.game.player.rect.x > 5:
                 self.dx = -1
-        self.velx = dt * self.dx * 2.65
+            else:
+                self.dx = 0
+
         self.posx += self.velx
         self.rect.centerx = self.posx
+        self.attack_area.centerx = self.posx
         self.hitbox.centerx = self.posx
 
         self.vely += self.acc*.9 *dt
