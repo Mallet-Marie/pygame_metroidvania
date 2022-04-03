@@ -8,15 +8,17 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, game, pos):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
-        self.image = pygame.image.load(path.join(self.game.game.assets_dir, "player.png"))
-        self.image = pygame.Surface((32, 64))
-        #self.image = pygame.transform.scale2x(self.image)
-        #self.image.set_alpha(64) make transparent
-        self.image.fill(GREEN)
+        self.image = pygame.image.load(path.join(self.game.game.assets_dir, "player.png")).convert_alpha()
+        #self.image = pygame.transform.flip(self.image, True, False)
         self.rect = self.image.get_rect()
+        self.hitbox = self.image.get_rect()
+        self.hitbox.inflate_ip(-54, -6)
+        self.hitbox.move_ip(0, 3)
         pygame.draw.rect(self.image, RED, self.rect, 1)
+        pygame.draw.rect(self.image, GREEN, self.hitbox, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
+        self.hitbox.centerx , self.hitbox.centery = self.rect.centerx-5, self.rect.centery+3
         self.health = 5
         self.velx = 0
         self.vely = 0
@@ -29,7 +31,6 @@ class Player(pygame.sprite.Sprite):
         self.invincible = False
         #self.hit = False
         self.been_hit = False
-        self.hitbox = self.rect.copy()
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
         self.iframes = pygame.time.get_ticks()
 
@@ -41,7 +42,7 @@ class Player(pygame.sprite.Sprite):
             if self.dx < 0:
                 self.posx = hits[0].hitbox.right
             self.velx = 0
-            self.rect.x = self.posx
+            self.rect.x = self.posx-27
             self.hitbox.x = self.posx
 
     def vertical_movement(self, tiles):
@@ -56,12 +57,12 @@ class Player(pygame.sprite.Sprite):
                 self.vely = 0
                 self.jumps = 2
                 self.hitbox.y = self.posy
-                self.rect.y = self.posy
+                self.rect.y = self.posy-6
             if self.vely < 0:
                 self.vely = 0
-                self.posy = hits[0].rect.bottom
+                self.posy = hits[0].hitbox.bottom
                 self.hitbox.y = self.posy
-                self.rect.y = self.posy
+                self.rect.y = self.posy-6
                 
         if self.on_ground and self.vely != 0:
             self.on_ground = False
@@ -90,7 +91,7 @@ class Player(pygame.sprite.Sprite):
         self.dx = self.inputs["right"] - self.inputs["left"]
         self.velx = dt * self.dx * 3  
         self.posx += self.velx
-        self.rect.x = self.posx
+        self.rect.x = self.posx-27
         self.hitbox.x = self.posx
         self.horizontal_movement(tiles)
        # if self.jumping:
@@ -103,7 +104,7 @@ class Player(pygame.sprite.Sprite):
             self.jumping = False
         self.vely += self.acc*.9 * dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))
-        self.rect.y = self.posy
+        self.rect.y = self.posy-6
         self.hitbox.y = self.posy
 
         self.vertical_movement(tiles)
@@ -173,11 +174,11 @@ class Ninja(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
         self.image = pygame.image.load(path.join(self.game.game.assets_dir, "ninja.png")).convert_alpha()
-        self.image = pygame.Surface((32, 64))
-        #self.image = pygame.transform.flip(self.image, True, False)
-        #self.image.set_colorkey(BLACK)
+        #self.image = pygame.Surface((32, 64))
+        self.image = pygame.transform.flip(self.image, True, False)
+        self.image.set_colorkey(BLACK)
         #self.image = pygame.transform.scale2x(self.image)
-        self.image.fill(BLACK)
+        #self.image.fill(BLACK)
         self.hitbox = self.image.get_rect()
         self.rect = self.image.get_rect()
         self.hitbox = self.hitbox.inflate(-35, -5)
@@ -252,12 +253,13 @@ class Ninja(pygame.sprite.Sprite):
 
     def update(self, dt, tiles):
         if self.fleeing:
-            if self.points[self.next_point]["cx"] * 8 < self.rect.x:
-                self.dx = -1
-            elif self.points[self.next_point]["cx"] * 8 > self.rect.x:
+            if self.points[self.next_point]["cx"] * 8 - self.rect.x > 5:
                 self.dx = 1
+            elif self.points[self.next_point]["cx"] * 8 - self.rect.x < -5:
+                self.dx = -1
             else:
                 self.dx = 0
+                self.fleeing = False
             if (abs(self.rect.x - self.points[self.next_point]["cx"]*8)) <= 170 and self.rect.y - self.points[self.next_point]["cy"]*8 > 64 and not self.jumping:
                 self.jump()
 
@@ -265,7 +267,10 @@ class Ninja(pygame.sprite.Sprite):
             self.dx_sword = 1
         elif self.rect.x > self.game.player.rect.x:
             self.dx_sword = -1
-                
+            
+        if self.game.player.rect.centerx - self.rect.x < 15 and self.game.player.rect.centerx - self.rect.x > -15:
+            self.fleeing = True
+
         self.velx = self.dx * 4 * dt
         if self.health <= 0:
             self.kill()
@@ -302,22 +307,24 @@ class Samurai(pygame.sprite.Sprite):
     def __init__(self, game, pos):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
-        #self.image = pygame.image.load(path.join(self.game.game.assets_dir, "samurai.png")).convert_alpha()
-        #self.image = pygame.transform.flip(self.image, True, False)
-        self.image = pygame.Surface((32, 64))
-        self.image.fill(RED)
+        self.image = pygame.image.load(path.join(self.game.game.assets_dir, "samurai.png")).convert_alpha()
+        self.image = pygame.transform.flip(self.image, True, False)
+        #self.image = pygame.Surface((32, 64))
+        #self.image.fill(RED)
         self.rect = self.image.get_rect()
-        self.hitbox = self.rect.copy()
-        self.hitbox = self.hitbox.inflate(-64, 0)
+        self.hitbox = self.image.get_rect()
+        self.hitbox.inflate_ip(-48, 0)
         #self.hitbox = self.hitbox.move(-6, 3)
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
         pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
-        self.posx, self.posy = self.rect.center
-        self.hitbox.center = (self.posx, self.posy)
+        self.posx, self.posy = self.rect.topleft
+        self.hitbox.center = self.rect.center
+        print(self.rect.x)
+        print(self.hitbox.x)
         self.attack_area = pygame.Rect(0, 0, 96, 80)
         self.attack_area.center = self.rect.center
-        self.bounds = (self.posx - 75, self.posx +75)
+        self.bounds = (self.hitbox.centerx - 75, self.hitbox.centerx +75)
         self.vely = 0
         self.velx = 0
         self.acc = .5
@@ -345,18 +352,31 @@ class Samurai(pygame.sprite.Sprite):
             self.sword = Sword(self.rect.x+32, self.rect.y+8, 96, 96, 48)
         self.game.mob_melee.add(self.sword)
         self.game.all_sprites.add(self.sword)
+    
+    def horizontal_collisions(self, tiles):
+        hits = pygame.sprite.spritecollide(self, tiles, False, self.game.collide_hitbox)
+        if hits:
+            if self.dx > 0:
+                self.posx = hits[0].hitbox.left - self.hitbox.width
+            if self.dx < 0:
+                self.posx = hits[0].hitbox.right
+            self.velx *= -1
+            self.rect.x = self.posx-24
+            self.hitbox.x = self.posx
 
     def vertical_collisions(self, tiles):
-        hits = pygame.sprite.spritecollide(self, tiles, False)
+        hits = pygame.sprite.spritecollide(self, tiles, False, self.game.collide_hitbox)
         if hits:
             if self.vely > 0:
-                self.posy = hits[0].rect.top - self.rect.height
+                self.posy = hits[0].hitbox.top - self.hitbox.height
                 self.vely = 0
+                self.hitbox.y = self.posy
                 self.rect.y = self.posy
             if self.vely < 0:
                 self.vely = 0
-                self.posy = hits[0].rect.bottom
+                self.posy = hits[0].hitbox.bottom
                 self.rect.y = self.posy
+                self.hitbox.y = self.posy
 
     def update(self, dt, tiles):
         hits = self.attack_area.colliderect(self.game.player.rect)
@@ -386,33 +406,33 @@ class Samurai(pygame.sprite.Sprite):
                     self.attack()
         else:
             self.velx = dt * self.dx * 2.6
-        print(self.velx)
-        if abs(self.rect.x - self.game.player.rect.x) <= 150:
+        if abs(self.hitbox.centerx - self.game.player.hitbox.centerx) <= 150:
             self.seeking = True
             self.patrol = False
         else:
             if self.seeking:
                 self.patrol = True
                 self.seeking = False
-                self.bounds = (self.posx - 75, self.posx +75)
+                self.bounds = (self.hitbox.centerx - 75, self.hitbox.centerx +75)
 
         if self.patrol:
-            if self.rect.centerx <= self.bounds[0]:
+            if self.hitbox.centerx <= self.bounds[0]:
                 self.dx = 1
-            elif self.rect.centerx >= self.bounds[1]:
+            elif self.hitbox.centerx >= self.bounds[1]:
                 self.dx = -1
         elif self.seeking:
-            if self.rect.x - self.game.player.rect.x < -5:
+            if self.hitbox.centerx - self.game.player.hitbox.centerx < -5:
                 self.dx = 1
-            elif self.rect.x - self.game.player.rect.x > 5:
+            elif self.hitbox.centerx - self.game.player.hitbox.centerx > 5:
                 self.dx = -1
             else:
                 self.dx = 0
 
         self.posx += self.velx
-        self.rect.centerx = self.posx
-        self.attack_area.centerx = self.posx
-        self.hitbox.centerx = self.posx
+        self.rect.x = self.posx - 24
+        self.hitbox.x = self.posx
+        self.horizontal_collisions(tiles)
+        self.attack_area.centerx = self.hitbox.centerx
 
         self.vely += self.acc*.9 *dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))

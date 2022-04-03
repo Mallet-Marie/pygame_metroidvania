@@ -26,7 +26,7 @@ class Tile(pygame.sprite.Sprite):
 class StaticTile(Tile):
     def __init__(self, id, pos, surface):
         Tile.__init__(self, id, pos)
-        #self.image = surface
+        self.image = surface
 
 class CameraGroup(pygame.sprite.Group):
     def __init__(self):
@@ -43,7 +43,7 @@ class CameraGroup(pygame.sprite.Group):
         self.offsetx, self.offsety = self.camera_rect.left - 200, self.camera_rect.top - 300
         #player.rect.centerx - self.half_w, player.rect.centery - self.half_h
         
-        if player.rect.left < self.camera_rect.left:
+        if player.rect.left < self.camera_rect.left and player.rect.left > 200:
             self.camera_rect.left = player.rect.left
         if player.rect.right > self.camera_rect.right:
             self.camera_rect.right = player.rect.right
@@ -143,7 +143,7 @@ class World(State):
                 hit.iframe()
                 hit.attack_time = pygame.time.get_ticks()
                 hit.should_attack = True
-        player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
+        #player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
         mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, False)
         mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False)
         if not self.player.invincible:
@@ -153,9 +153,9 @@ class World(State):
             for hit in mob_hits:
                 self.player.health -= 1
                 self.player.iframe()
-            if player_hits:
-                self.player.health -= 1
-                self.player.iframe()
+            #if player_hits:
+            #    self.player.health -= 1
+            #    self.player.iframe()
 
             if self.player.health <= 0 or self.player.rect.bottom >= HEIGHT:
                 self.exit_state()
@@ -173,8 +173,8 @@ class World(State):
             display.blit(heart_img, heart_rect)
 
     def draw(self, display):
-        #display.blit(self.image, self.rect) # Erase screen/draw background
-        display.fill(WHITE)
+        display.blit(self.image, self.rect) # Erase screen/draw background
+        #display.fill(WHITE)
         # *after* drawing everything, flip the display
-        self.draw_health(display, 10, 10, self.player.health)
         self.all_sprites.custom_draw(display, self.player)
+        self.draw_health(display, 10, 10, self.player.health)

@@ -40,6 +40,10 @@ Samurai game:
 	followed by ghosts of fallen samurai
 	strengthened/motivated by their hatred and thirst for vengeance
 	kunai mouse pointer in menus
+	boss jump attack and spawn sword from ground
+	boss jump attack and shockwave
+	boss swords hover around boss and sometimes shoot at player/block
+	boss dash attack
 Timeline for Samurai game:
 	horizontal movement (done)
 	jump (done)

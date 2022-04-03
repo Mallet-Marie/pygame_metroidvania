@@ -5,11 +5,11 @@
 		"doc": "https://ldtk.io/json",
 		"schema": "https://ldtk.io/files/JSON_SCHEMA.json",
 		"appAuthor": "Sebastien 'deepnight' Benard",
-		"appVersion": "1.0.0",
+		"appVersion": "1.1.0",
 		"url": "https://ldtk.io"
 	},
-	"jsonVersion": "1.0.0",
-	"appBuildId": 457931,
+	"jsonVersion": "1.1.0",
+	"appBuildId": 458005,
 	"nextUid": 12,
 	"identifierStyle": "Capitalize",
 	"worldLayout": "Free",
@@ -25,6 +25,7 @@
 	"minifyJson": false,
 	"externalLevels": false,
 	"exportTiled": false,
+	"simplifiedExport": false,
 	"imageExportMode": "None",
 	"pngFilePattern": null,
 	"backupOnSave": false,
@@ -327,16 +328,16 @@
 						},
 						{
 							"__identifier": "Samurai",
-							"__grid": [107,31],
+							"__grid": [103,31],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": { "tilesetUid": 2, "x": 128, "y": 0, "w": 64, "h": 64 },
 							"__smartColor": "#94D9B3",
-							"iid": "f5865fe0-8dc0-11ec-ba3c-57b77290b988",
+							"iid": "d21bfb60-8dc0-11ec-bd2d-f323baa81f67",
 							"width": 64,
 							"height": 64,
 							"defUid": 6,
-							"px": [856,248],
+							"px": [824,248],
 							"fieldInstances": []
 						}
 					]
