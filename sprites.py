@@ -1,8 +1,10 @@
 import pygame
 import math
+from pygame.constants import *
 from settings import *
 from os import path
 import random
+import json
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, pos):
@@ -181,13 +183,16 @@ class Ninja(pygame.sprite.Sprite):
         #self.image.fill(BLACK)
         self.hitbox = self.image.get_rect()
         self.rect = self.image.get_rect()
-        self.hitbox = self.hitbox.inflate(-35, -5)
-        self.hitbox = self.hitbox.move(0, 3)
+        self.hitbox.inflate_ip(-100, -68)
+        self.hitbox.move_ip(0, 36)
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
         pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
-        self.posx, self.posy = self.rect.center
-        self.hitbox.center = self.posx - 1, self.posy + 3
+        self.posx, self.posy = self.rect.topleft
+        self.hitbox.centerx = self.posx
+        self.hitbox.y = self.posy + 60
+        #print(self.rect.y)
+        #print(self.hitbox.y)
         self.attacking = False
         self.dx, self.dy = 0, 0
         self.dx_sword = 0
@@ -307,23 +312,22 @@ class Samurai(pygame.sprite.Sprite):
     def __init__(self, game, pos):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
-        self.image = pygame.image.load(path.join(self.game.game.assets_dir, "samurai.png")).convert_alpha()
-        self.image = pygame.transform.flip(self.image, True, False)
+        self.load_images()
+        #self.image = pygame.image.load(path.join(self.game.game.assets_dir, "samurai.png")).convert_alpha()
+        #self.image = pygame.transform.flip(self.image, True, False)
         #self.image = pygame.Surface((32, 64))
         #self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.hitbox = self.image.get_rect()
-        self.hitbox.inflate_ip(-48, 0)
-        #self.hitbox = self.hitbox.move(-6, 3)
+        self.hitbox.inflate_ip(-96, -64)
+        self.hitbox.move_ip(0, 32)
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
         pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
-        self.hitbox.center = self.rect.center
-        print(self.rect.x)
-        print(self.hitbox.x)
+        self.hitbox.center = self.rect.centerx, self.rect.centery+32
         self.attack_area = pygame.Rect(0, 0, 96, 80)
-        self.attack_area.center = self.rect.center
+        self.attack_area.center = self.hitbox.center
         self.bounds = (self.hitbox.centerx - 75, self.hitbox.centerx +75)
         self.vely = 0
         self.velx = 0
@@ -336,6 +340,8 @@ class Samurai(pygame.sprite.Sprite):
         self.attack_delay = pygame.time.get_ticks()
         self.should_attack = False
         self.attacking = False
+        self.frame, self.last_frame_update = 0, 0
+        self.anim_list = []
         self.dx = random.randint(-1, 1)
         while self.dx == 0:
             self.dx = random.randint(-1, 1)
@@ -343,6 +349,77 @@ class Samurai(pygame.sprite.Sprite):
     def iframe(self):
         pass
     
+    def load_images(self):
+        sprite_dir = self.game.game.sprite_dir
+        self.l_walk, self.r_walk, self.l_attack, self.r_attack, self.l_idle, self.r_idle = [], [], [], [], [], []
+
+        l_walk_image = pygame.image.load(path.join(sprite_dir, "samurai_left_walk.png")).convert_alpha()
+        with open(path.join(sprite_dir, "samurai_left_walk.json")) as l_walk_file:
+            l_walk = json.load(l_walk_file)
+        frames = l_walk["frames"]
+        for i in range(len(frames)):
+            filename = 'samurai_walk {}.aseprite'.format(i)
+            data = l_walk['frames'][filename]['frame']
+            x, y, w, h = data['x'], data['y'], data['w'], data['h']
+            image = pygame.Surface((w, h), flags = SRCALPHA).convert_alpha()
+            image.blit(l_walk_image, (0, 0), pygame.Rect(x, y, w, h))
+            self.l_walk.append(image)
+        l_walk_file.close()
+
+        r_walk_image = pygame.image.load(path.join(sprite_dir, "samurai_right_walk.png")).convert_alpha()
+        with open(path.join(sprite_dir, "samurai_right_walk.json")) as r_walk_file:
+            r_walk = json.load(r_walk_file)
+        frames = r_walk["frames"]
+        for i in range(len(frames)):
+            filename = 'samurai_walk {}.aseprite'.format(i)
+            data = r_walk['frames'][filename]['frame']
+            x, y, w, h = data['x'], data['y'], data['w'], data['h']
+            image = pygame.Surface((w, h), flags = SRCALPHA).convert_alpha()
+            image.blit(r_walk_image, (0, 0), pygame.Rect(x, y, w, h))
+            self.r_walk.append(image)
+        r_walk_file.close()
+
+        l_attack_image = pygame.image.load(path.join(sprite_dir, "samurai_left_attack.png")).convert_alpha()
+        with open(path.join(sprite_dir, "samurai_left_attack.json")) as l_attack_file:
+            l_attack = json.load(l_attack_file)
+        frames = l_attack["frames"]
+        for i in range(len(frames)):
+            filename = 'samurai_attack {}.aseprite'.format(i)
+            data = l_attack['frames'][filename]['frame']
+            x, y, w, h = data['x'], data['y'], data['w'], data['h']
+            image = pygame.Surface((w, h), flags = SRCALPHA).convert_alpha()
+            image.blit(l_attack_image, (0, 0), pygame.Rect(x, y, w, h))
+            self.l_attack.append(image)
+        l_attack_file.close()
+
+        r_attack_image = pygame.image.load(path.join(sprite_dir, "samurai_right_attack.png")).convert_alpha()
+        with open(path.join(sprite_dir, "samurai_right_attack.json")) as r_attack_file:
+            r_attack = json.load(r_attack_file)
+        frames = r_attack["frames"]
+        for i in range(len(frames)):
+            filename = 'samurai_attack {}.aseprite'.format(i)
+            data = r_attack['frames'][filename]['frame']
+            x, y, w, h = data['x'], data['y'], data['w'], data['h']
+            image = pygame.Surface((w, h), flags = SRCALPHA).convert_alpha()
+            image.blit(r_attack_image, (0, 0), pygame.Rect(x, y, w, h))
+            self.r_attack.append(image)
+        r_attack_file.close()
+
+        self.image = self.l_walk[0]
+    
+    def animate(self, dt):
+        self.last_frame_update += dt
+        if self.velx > 0:
+            self.anim_list = self.r_walk
+        elif self.velx < 0:
+            self.anim_list = self.l_walk
+        
+
+        if self.last_frame_update > 60/8:
+            self.last_frame_update = 0
+            self.frame = (self.frame+1)%len(self.anim_list)
+            self.image = self.anim_list[self.frame]
+
     def attack(self):
         self.attack_time = pygame.time.get_ticks()
         self.attacking = True
@@ -361,7 +438,7 @@ class Samurai(pygame.sprite.Sprite):
             if self.dx < 0:
                 self.posx = hits[0].hitbox.right
             self.velx *= -1
-            self.rect.x = self.posx-24
+            self.rect.x = self.posx-48
             self.hitbox.x = self.posx
 
     def vertical_collisions(self, tiles):
@@ -371,11 +448,11 @@ class Samurai(pygame.sprite.Sprite):
                 self.posy = hits[0].hitbox.top - self.hitbox.height
                 self.vely = 0
                 self.hitbox.y = self.posy
-                self.rect.y = self.posy
+                self.rect.y = self.posy-64
             if self.vely < 0:
                 self.vely = 0
                 self.posy = hits[0].hitbox.bottom
-                self.rect.y = self.posy
+                self.rect.y = self.posy-64
                 self.hitbox.y = self.posy
 
     def update(self, dt, tiles):
@@ -388,7 +465,7 @@ class Samurai(pygame.sprite.Sprite):
             self.should_attack = False
 
         if self.attacking:
-            self.velx = dt * self.dx * 2.6
+            self.velx = dt * self.dx * 2.5
             if self.dx == -1:
                 self.sword.update(self.rect.x, self.rect.y+8, self)
             elif self.dx == 1:
@@ -405,7 +482,7 @@ class Samurai(pygame.sprite.Sprite):
                 if attack_delay - self.attack_delay > 100:
                     self.attack()
         else:
-            self.velx = dt * self.dx * 2.6
+            self.velx = dt * self.dx * 2.5
         if abs(self.hitbox.centerx - self.game.player.hitbox.centerx) <= 150:
             self.seeking = True
             self.patrol = False
@@ -429,13 +506,14 @@ class Samurai(pygame.sprite.Sprite):
                 self.dx = 0
 
         self.posx += self.velx
-        self.rect.x = self.posx - 24
+        self.rect.x = self.posx - 48
         self.hitbox.x = self.posx
         self.horizontal_collisions(tiles)
         self.attack_area.centerx = self.hitbox.centerx
 
         self.vely += self.acc*.9 *dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))
-        self.rect.y = self.posy
+        self.rect.y = self.posy-64
         self.hitbox.y = self.posy
         self.vertical_collisions(tiles)
+        self.animate(dt)

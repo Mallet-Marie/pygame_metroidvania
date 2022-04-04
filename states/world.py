@@ -106,6 +106,7 @@ class World(State):
             if tile.id == 4 or tile.id == 0 or tile.id == 7:
                 self.collision_tiles.add(tile)
             self.all_sprites.add()
+        map_file.close()
 
     def spawn_sprites(self):
         with open("map4.ldtk", "r") as map_file:
@@ -127,6 +128,7 @@ class World(State):
                     sprite = Samurai(self, pos)
                 self.all_sprites.add(sprite)
                 self.mobs.add(sprite)
+        map_file.close()
 
     def update(self, dt, inputs):
         self.dt = dt

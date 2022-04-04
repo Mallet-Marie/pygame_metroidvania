@@ -74,6 +74,7 @@ class Game():
 
     def load_assets(self):
         self.assets_dir = path.join("assets")
+        self.sprite_dir = path.join(self.assets_dir, "sprites")
         self.font_dir = path.join(self.assets_dir, "font")
 
     def get_dt(self):
