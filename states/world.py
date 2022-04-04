@@ -76,7 +76,7 @@ class World(State):
     def collide_circle_hitbox(self, left, right):
         return left.hitbox.collide_circle(right.hitbox)
     
-    def collide_circle_rect(self, right, left):
+    def collide_rect_circle_hitbox(self, right, left):
         circle_distance_x = abs(right.hitbox.centerx-left.hitbox.centerx)
         circle_distance_y = abs(right.hitbox.centery-left.hitbox.centery)
         if circle_distance_x > left.hitbox.w/2.0+right.radius or circle_distance_y > left.hitbox.h/2.0+right.radius:
@@ -146,8 +146,8 @@ class World(State):
                 hit.attack_time = pygame.time.get_ticks()
                 hit.should_attack = True
         #player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
-        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, False)
-        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False)
+        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, False, self.collide_hitbox)
+        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False, self.collide_hitbox)
         if not self.player.invincible:
             for hit in mob_melee_hits:
                 self.player.health -= 1

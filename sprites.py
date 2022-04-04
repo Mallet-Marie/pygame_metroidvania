@@ -340,8 +340,10 @@ class Samurai(pygame.sprite.Sprite):
         self.attack_delay = pygame.time.get_ticks()
         self.should_attack = False
         self.attacking = False
+        self.facing_left, self.facing_right = False, False
         self.frame, self.last_frame_update = 0, 0
-        self.anim_list = []
+        self.anim_list = self.l_walk
+        self.attack_done = True
         self.dx = random.randint(-1, 1)
         while self.dx == 0:
             self.dx = random.randint(-1, 1)
@@ -405,28 +407,61 @@ class Samurai(pygame.sprite.Sprite):
             self.r_attack.append(image)
         r_attack_file.close()
 
+        l_idle_image = pygame.image.load(path.join(sprite_dir, "samurai_left_idle.png")).convert_alpha()
+        with open(path.join(sprite_dir, "samurai_left_idle.json")) as l_idle_file:
+            l_idle = json.load(l_idle_file)
+        frames = l_idle["frames"]
+        for i in range(len(frames)):
+            filename = 'samurai {}.aseprite'.format(i)
+            data = l_idle['frames'][filename]['frame']
+            x, y, w, h = data['x'], data['y'], data['w'], data['h']
+            image = pygame.Surface((w, h), flags = SRCALPHA).convert_alpha()
+            image.blit(l_idle_image, (0, 0), pygame.Rect(x, y, w, h))
+            self.l_idle.append(image)
+        l_idle_file.close()
+
+        r_idle_image = pygame.image.load(path.join(sprite_dir, "samurai_right_idle.png")).convert_alpha()
+        with open(path.join(sprite_dir, "samurai_right_idle.json")) as r_idle_file:
+            r_idle = json.load(r_idle_file)
+        frames = r_idle["frames"]
+        for i in range(len(frames)):
+            filename = 'samurai {}.aseprite'.format(i)
+            data = r_idle['frames'][filename]['frame']
+            x, y, w, h = data['x'], data['y'], data['w'], data['h']
+            image = pygame.Surface((w, h), flags = SRCALPHA).convert_alpha()
+            image.blit(r_idle_image, (0, 0), pygame.Rect(x, y, w, h))
+            self.r_idle.append(image)
+        r_idle_file.close()
+
         self.image = self.l_walk[0]
     
     def animate(self, dt):
         self.last_frame_update += dt
-        if self.velx > 0:
-            self.anim_list = self.r_walk
-        elif self.velx < 0:
-            self.anim_list = self.l_walk
-        
+        if self.attack_done:
+            if self.velx == 0:
+                if self.facing_left:
+                    self.anim_list = self.l_idle
+                elif self.facing_right:
+                    self.anim_list = self.r_idle
+            else:
+                if self.facing_left:
+                    self.anim_list = self.l_walk
+                elif self.facing_right:
+                    self.anim_list = self.r_walk           
 
         if self.last_frame_update > 60/8:
             self.last_frame_update = 0
             self.frame = (self.frame+1)%len(self.anim_list)
             self.image = self.anim_list[self.frame]
-
+ 
     def attack(self):
         self.attack_time = pygame.time.get_ticks()
         self.attacking = True
+        self.attack_done = False
         if self.dx == -1:
-            self.sword = Sword(self.rect.x, self.rect.y+8, 96, 96, 48)
+            self.sword = Sword(self.hitbox.x, self.hitbox.y+16, 88, 88, 44)
         elif self.dx == 1:
-            self.sword = Sword(self.rect.x+32, self.rect.y+8, 96, 96, 48)
+            self.sword = Sword(self.hitbox.x+32, self.hitbox.y+16, 88, 88, 44)
         self.game.mob_melee.add(self.sword)
         self.game.all_sprites.add(self.sword)
     
@@ -437,7 +472,7 @@ class Samurai(pygame.sprite.Sprite):
                 self.posx = hits[0].hitbox.left - self.hitbox.width
             if self.dx < 0:
                 self.posx = hits[0].hitbox.right
-            self.velx *= -1
+            self.velx = 0
             self.rect.x = self.posx-48
             self.hitbox.x = self.posx
 
@@ -467,10 +502,11 @@ class Samurai(pygame.sprite.Sprite):
         if self.attacking:
             self.velx = dt * self.dx * 2.5
             if self.dx == -1:
-                self.sword.update(self.rect.x, self.rect.y+8, self)
+                self.sword.update(self.hitbox.x, self.hitbox.y+16, self)
             elif self.dx == 1:
-                self.sword.update(self.rect.x+32, self.rect.y+8, self)
+                self.sword.update(self.hitbox.x+32, self.hitbox.y+16, self)
             if self.sword.finished:
+                self.attack_done = True
                 now = pygame.time.get_ticks()
                 if now - self.attack_time > 1500:
                     self.attacking = False
@@ -479,8 +515,13 @@ class Samurai(pygame.sprite.Sprite):
             self.velx = dt * self.dx * 1
             if not self.attacking:
                 attack_delay = pygame.time.get_ticks()
-                if attack_delay - self.attack_delay > 100:
+                if attack_delay - self.attack_delay > 200:
                     self.attack()
+                    self.frame = 0
+                    if self.facing_left:
+                        self.anim_list = self.l_attack
+                    elif self.facing_right:
+                        self.anim_list = self.r_attack  
         else:
             self.velx = dt * self.dx * 2.5
         if abs(self.hitbox.centerx - self.game.player.hitbox.centerx) <= 150:
@@ -516,4 +557,10 @@ class Samurai(pygame.sprite.Sprite):
         self.rect.y = self.posy-64
         self.hitbox.y = self.posy
         self.vertical_collisions(tiles)
+        if self.velx > 0:
+            self.facing_right = True
+            self.facing_left = False
+        elif self.velx < 0:
+            self.facing_left = True
+            self.facing_right = False
         self.animate(dt)
