@@ -152,6 +152,7 @@ class World(State):
             for hit in mob_melee_hits:
                 self.player.health -= 1
                 self.player.iframe()
+                hit.kill()
             for hit in mob_hits:
                 self.player.health -= 1
                 self.player.iframe()
