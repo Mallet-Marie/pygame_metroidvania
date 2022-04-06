@@ -14,13 +14,13 @@ class Player(pygame.sprite.Sprite):
         #self.image = pygame.transform.flip(self.image, True, False)
         self.rect = self.image.get_rect()
         self.hitbox = self.image.get_rect()
-        self.hitbox.inflate_ip(-54, -6)
-        self.hitbox.move_ip(0, 3)
+        self.hitbox.inflate_ip(-104, -70)
+        self.hitbox.move_ip(0, 35)
         pygame.draw.rect(self.image, RED, self.rect, 1)
         pygame.draw.rect(self.image, GREEN, self.hitbox, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
-        self.hitbox.centerx , self.hitbox.centery = self.rect.centerx-5, self.rect.centery+3
+        self.hitbox.center = self.rect.centerx, self.rect.centery+29
         self.health = 5
         self.velx = 0
         self.vely = 0
@@ -44,7 +44,7 @@ class Player(pygame.sprite.Sprite):
             if self.dx < 0:
                 self.posx = hits[0].hitbox.right
             self.velx = 0
-            self.rect.x = self.posx-27
+            self.rect.x = self.posx-52
             self.hitbox.x = self.posx
 
     def vertical_movement(self, tiles):
@@ -59,12 +59,12 @@ class Player(pygame.sprite.Sprite):
                 self.vely = 0
                 self.jumps = 2
                 self.hitbox.y = self.posy
-                self.rect.y = self.posy-6
+                self.rect.y = self.posy-70
             if self.vely < 0:
                 self.vely = 0
                 self.posy = hits[0].hitbox.bottom
                 self.hitbox.y = self.posy
-                self.rect.y = self.posy-6
+                self.rect.y = self.posy-70
                 
         if self.on_ground and self.vely != 0:
             self.on_ground = False
@@ -93,7 +93,7 @@ class Player(pygame.sprite.Sprite):
         self.dx = self.inputs["right"] - self.inputs["left"]
         self.velx = dt * self.dx * 3  
         self.posx += self.velx
-        self.rect.x = self.posx-27
+        self.rect.x = self.posx-52
         self.hitbox.x = self.posx
         self.horizontal_movement(tiles)
        # if self.jumping:
@@ -106,7 +106,7 @@ class Player(pygame.sprite.Sprite):
             self.jumping = False
         self.vely += self.acc*.9 * dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))
-        self.rect.y = self.posy-6
+        self.rect.y = self.posy-70
         self.hitbox.y = self.posy
 
         self.vertical_movement(tiles)
@@ -145,6 +145,7 @@ class Sword(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.spawn >= 250:
             self.finished = True
             self.kill()
+        #print(self.finished)
         self.posx = posx
         self.posy = posy
         self.rect.centerx = self.posx
@@ -156,7 +157,7 @@ class Shuriken(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((5, 5))
-        self.image.fill(BLACK)
+        self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.hitbox = self.rect.copy()
         self.rect.centerx = x
@@ -189,10 +190,7 @@ class Ninja(pygame.sprite.Sprite):
         pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
-        self.hitbox.centerx = self.posx
-        self.hitbox.y = self.posy + 60
-        #print(self.rect.y)
-        #print(self.hitbox.y)
+        self.hitbox.center = self.rect.centerx, self.rect.centery+30
         self.attacking = False
         self.dx, self.dy = 0, 0
         self.dx_sword = 0
@@ -236,21 +234,23 @@ class Ninja(pygame.sprite.Sprite):
         now = pygame.time.get_ticks()
         if now - self.last_throw > self.throw_interval:
             self.last_throw = now
-            shuriken = Shuriken(self.rect.centerx, self.rect.centery, self.rot)
+            shuriken = Shuriken(self.hitbox.centerx, self.hitbox.centery, self.rot)
             self.game.all_sprites.add(shuriken)
             self.game.mob_attacks.add(shuriken)
 
     def vertical_collisions(self, tiles):
-        hits = pygame.sprite.spritecollide(self, tiles, False)
+        hits = pygame.sprite.spritecollide(self, tiles, False, self.game.collide_hitbox)
         if hits:
             if self.vely > 0:
-                self.posy = hits[0].rect.top - self.rect.height
+                self.posy = hits[0].hitbox.top - self.hitbox.height
                 self.vely = 0
-                self.rect.y = self.posy
+                self.hitbox.y = self.posy
+                self.rect.y = self.posy - 68
             if self.vely < 0:
                 self.vely = 0
-                self.posy = hits[0].rect.bottom
-                self.rect.y = self.posy
+                self.posy = hits[0].hitbox.bottom
+                self.hitbox.y = self.posy
+                self.rect.y = self.posy - 68
     
     def jump(self):
         self.jumping = True
@@ -258,22 +258,22 @@ class Ninja(pygame.sprite.Sprite):
 
     def update(self, dt, tiles):
         if self.fleeing:
-            if self.points[self.next_point]["cx"] * 8 - self.rect.x > 5:
+            if self.points[self.next_point]["cx"] * 8 - self.hitbox.x > 5:
                 self.dx = 1
-            elif self.points[self.next_point]["cx"] * 8 - self.rect.x < -5:
+            elif self.points[self.next_point]["cx"] * 8 - self.hitbox.x < -5:
                 self.dx = -1
             else:
                 self.dx = 0
                 self.fleeing = False
-            if (abs(self.rect.x - self.points[self.next_point]["cx"]*8)) <= 170 and self.rect.y - self.points[self.next_point]["cy"]*8 > 64 and not self.jumping:
+            if (abs(self.hitbox.x - self.points[self.next_point]["cx"]*8)) <= 170 and self.hitbox.y - self.points[self.next_point]["cy"]*8 > 64 and not self.jumping:
                 self.jump()
 
-        if self.rect.x < self.game.player.rect.x:
+        if self.hitbox.x < self.game.player.hitbox.x:
             self.dx_sword = 1
-        elif self.rect.x > self.game.player.rect.x:
+        elif self.hitbox.x > self.game.player.hitbox.x:
             self.dx_sword = -1
             
-        if self.game.player.rect.centerx - self.rect.x < 15 and self.game.player.rect.centerx - self.rect.x > -15:
+        if self.game.player.hitbox.centerx - self.hitbox.x < 15 and self.game.player.hitbox.centerx - self.hitbox.x > -15:
             self.fleeing = True
 
         self.velx = self.dx * 4 * dt
@@ -281,14 +281,14 @@ class Ninja(pygame.sprite.Sprite):
             self.kill()
         self.vely += self.acc*.9 *dt
         self.posy += ((self.vely * dt) + ((self.acc/2) * (dt**2)))
-        self.rect.y = self.posy
+        self.rect.y = self.posy - 68
         self.hitbox.y = self.posy
         if self.invincible and pygame.time.get_ticks() - self.iframes > 500:
             self.invincible = False
         self.vertical_collisions(tiles)
 
-        self.dx_player = self.game.player.rect.x-self.rect.x
-        self.dy_player = self.game.player.rect.y-self.rect.y
+        self.dx_player = self.game.player.hitbox.x-self.hitbox.x
+        self.dy_player = self.game.player.hitbox.y-self.hitbox.y
         if abs(self.dx_player) < 350 and abs(self.dx_player) > 100 and not self.attacking :
             self.rot = math.atan2(self.dy_player, self.dx_player)
             self.throw()
@@ -305,8 +305,8 @@ class Ninja(pygame.sprite.Sprite):
                 self.fleeing = True
 
         self.posx += self.velx
-        self.rect.x = self.posx
-        self.hitbox.x = self.rect.x
+        self.rect.x = self.posx-58
+        self.hitbox.x = self.posx
 
 class Samurai(pygame.sprite.Sprite):
     def __init__(self, game, pos):
@@ -437,7 +437,7 @@ class Samurai(pygame.sprite.Sprite):
     
     def animate(self, dt):
         self.last_frame_update += dt
-        if self.attack_done:
+        if self.attack_done and not self.attacking:
             if self.velx == 0:
                 if self.facing_left:
                     self.anim_list = self.l_idle
@@ -449,6 +449,8 @@ class Samurai(pygame.sprite.Sprite):
                 elif self.facing_right:
                     self.anim_list = self.r_walk           
 
+        #print(len(self.anim_list))
+        #print(self.attack_done)
         if self.last_frame_update > 60/8:
             self.last_frame_update = 0
             self.frame = (self.frame+1)%len(self.anim_list)
@@ -457,7 +459,6 @@ class Samurai(pygame.sprite.Sprite):
     def attack(self):
         self.attack_time = pygame.time.get_ticks()
         self.attacking = True
-        self.attack_done = False
         if self.dx == -1:
             self.sword = Sword(self.hitbox.x, self.hitbox.y+16, 88, 88, 44)
         elif self.dx == 1:
@@ -506,6 +507,7 @@ class Samurai(pygame.sprite.Sprite):
             elif self.dx == 1:
                 self.sword.update(self.hitbox.x+32, self.hitbox.y+16, self)
             if self.sword.finished:
+                print("hi")
                 self.attack_done = True
                 now = pygame.time.get_ticks()
                 if now - self.attack_time > 1500:
@@ -514,14 +516,15 @@ class Samurai(pygame.sprite.Sprite):
         if self.should_attack:
             self.velx = dt * self.dx * 1
             if not self.attacking:
+                self.attack_done = False
                 attack_delay = pygame.time.get_ticks()
+                self.frame = 0
+                if self.facing_left:
+                    self.anim_list = self.l_attack
+                elif self.facing_right:
+                    self.anim_list = self.r_attack  
                 if attack_delay - self.attack_delay > 200:
                     self.attack()
-                    self.frame = 0
-                    if self.facing_left:
-                        self.anim_list = self.l_attack
-                    elif self.facing_right:
-                        self.anim_list = self.r_attack  
         else:
             self.velx = dt * self.dx * 2.5
         if abs(self.hitbox.centerx - self.game.player.hitbox.centerx) <= 150:

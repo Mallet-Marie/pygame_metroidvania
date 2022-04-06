@@ -152,7 +152,6 @@ class World(State):
             for hit in mob_melee_hits:
                 self.player.health -= 1
                 self.player.iframe()
-                hit.kill()
             for hit in mob_hits:
                 self.player.health -= 1
                 self.player.iframe()
@@ -160,8 +159,8 @@ class World(State):
             #    self.player.health -= 1
             #    self.player.iframe()
 
-            if self.player.health <= 0 or self.player.rect.bottom >= HEIGHT:
-                self.exit_state()
+            #if self.player.health <= 0 or self.player.rect.bottom >= HEIGHT:
+                #self.exit_state()
 
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, False, True, pygame.sprite.collide_circle)
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
