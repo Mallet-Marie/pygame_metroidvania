@@ -43,10 +43,14 @@ class CameraGroup(pygame.sprite.Group):
         self.offsetx, self.offsety = self.camera_rect.left - 200, self.camera_rect.top - 300
         #player.rect.centerx - self.half_w, player.rect.centery - self.half_h
         
-        if player.rect.left < self.camera_rect.left and player.rect.left > 200:
-            self.camera_rect.left = player.rect.left
-        if player.rect.right > self.camera_rect.right:
-            self.camera_rect.right = player.rect.right
+        if player.hitbox.left < self.camera_rect.left and player.hitbox.left > 200:
+            self.camera_rect.left = player.hitbox.left
+        if player.hitbox.right > self.camera_rect.right:
+            self.camera_rect.right = player.hitbox.right
+        if player.hitbox.top < self.camera_rect.top:
+            self.camera_rect.top = player.hitbox.top
+        if player.hitbox.bottom > self.camera_rect.bottom-48:
+            self.camera_rect.bottom = player.hitbox.bottom+48
         
         for sprite in self.sprites():
             offset_x = sprite.rect.x - self.offsetx
