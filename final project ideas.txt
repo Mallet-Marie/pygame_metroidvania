@@ -16,6 +16,8 @@ Protect It
 Ancient Ruins
 Take One, Leave The Rest
 
+Bugs:
+	samurai sword crashes
 Samurai game:
 	when die, spawn spirits of dead, more difficult after each death, if they kill you, perma death
 	parry (when sword collides with other sword)

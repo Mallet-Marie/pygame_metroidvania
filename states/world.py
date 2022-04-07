@@ -29,18 +29,22 @@ class StaticTile(Tile):
         self.image = surface
 
 class CameraGroup(pygame.sprite.Group):
-    def __init__(self):
+    def __init__(self, game):
         pygame.sprite.Group.__init__(self)
+        self.game = game
         self.offsetx, self.offsety = 100, 300
         self.half_w, self.half_h = WIDTH//2, HEIGHT//2
         self.cam_left = 200
-        self.cam_top = 300
-        self.cam_width = WIDTH - 400
-        self.cam_height = HEIGHT - 300
+        self.cam_right = 200
+        self.cam_top = 50
+        self.cam_bottom = 75
+        self.cam_width = WIDTH - (self.cam_left + self.cam_right)
+        self.cam_height = HEIGHT - (self.cam_top + self.cam_bottom)
         self.camera_rect = pygame.Rect(self.cam_left, self.cam_top, self.cam_width, self.cam_height)
+        self.visible_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
 
     def custom_draw(self, display, player):
-        self.offsetx, self.offsety = self.camera_rect.left - 200, self.camera_rect.top - 300
+        self.offsetx, self.offsety = self.camera_rect.left - self.cam_left, self.camera_rect.top - self.cam_top
         #player.rect.centerx - self.half_w, player.rect.centery - self.half_h
         
         if player.hitbox.left < self.camera_rect.left and player.hitbox.left > 200:
@@ -49,19 +53,21 @@ class CameraGroup(pygame.sprite.Group):
             self.camera_rect.right = player.hitbox.right
         if player.hitbox.top < self.camera_rect.top:
             self.camera_rect.top = player.hitbox.top
-        if player.hitbox.bottom > self.camera_rect.bottom-48:
-            self.camera_rect.bottom = player.hitbox.bottom+48
-        
+        if player.hitbox.bottom > self.camera_rect.bottom and (player.hitbox.bottom < 456 or player.hitbox.bottom > 504):
+            self.camera_rect.bottom = player.hitbox.bottom
+        self.visible_rect.topleft = self.camera_rect.x-200, self.camera_rect.y-50
+        self.game.visible_rect.topleft = self.visible_rect.topleft
         for sprite in self.sprites():
-            offset_x = sprite.rect.x - self.offsetx
-            offset_y = sprite.rect.y - self.offsety
-            display.blit(sprite.image, (offset_x, offset_y))
+            if self.visible_rect.colliderect(sprite.hitbox):
+                offset_x = sprite.rect.x - self.offsetx
+                offset_y = sprite.rect.y - self.offsety
+                display.blit(sprite.image, (offset_x, offset_y))
 
 class World(State):
     def __init__(self, game):
         State.__init__(self, game)
         self.game = game
-        self.all_sprites = CameraGroup()
+        self.all_sprites = CameraGroup(self)
         self.dependants = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
         self.attacks = pygame.sprite.Group()
@@ -72,6 +78,7 @@ class World(State):
         self.spawn_sprites()
         self.image = pygame.image.load(path.join(self.game.assets_dir, "fores.png")).convert_alpha()
         self.rect = self.image.get_rect()
+        self.visible_rect = pygame.Rect(0, 0, WIDTH*2, HEIGHT*2)
         #print(self.all_sprites.sprites())
 
     def collide_hitbox(self, left, right):
