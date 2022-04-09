@@ -78,7 +78,7 @@ class Game():
         self.font_dir = path.join(self.assets_dir, "font")
 
     def get_dt(self):
-        self.dt = self.clock.tick(FPS) * 0.001 * FPS
+        self.dt = self.clock.tick(FPS) * 0.001 * 60
     
     def draw_text(self, surface, text, size, colour, x, y):
         self.font = pygame.font.Font(path.join(self.font_dir, "Minecraft.ttf"), size)

@@ -24,9 +24,11 @@ class Tile(pygame.sprite.Sprite):
         self.hitbox.topleft = (self.posx, self.posy)
 
 class StaticTile(Tile):
-    def __init__(self, id, pos, surface):
+    def __init__(self, id, pos, flip, surface):
         Tile.__init__(self, id, pos)
         self.image = surface
+        if flip:
+            self.image = pygame.transform.flip(self.image, True, False)
 
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, game):
@@ -76,9 +78,10 @@ class World(State):
         self.collision_tiles = pygame.sprite.Group()
         self.create_tile_group()
         self.spawn_sprites()
-        self.image = pygame.image.load(path.join(self.game.assets_dir, "fores.png")).convert_alpha()
+        self.image = pygame.image.load(path.join(self.game.assets_dir, "forest.png")).convert_alpha()
         self.rect = self.image.get_rect()
-        self.visible_rect = pygame.Rect(0, 0, WIDTH*2, HEIGHT*2)
+        self.visible_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
+        self.leave_state = False
         #print(self.all_sprites.sprites())
 
     def collide_hitbox(self, left, right):
@@ -87,7 +90,7 @@ class World(State):
     def collide_circle_hitbox(self, left, right):
         return left.hitbox.collide_circle(right.hitbox)
     
-    def collide_rect_circle_hitbox(self, right, left):
+    def collide_rect_circle_hitbox(self, left, right):
         circle_distance_x = abs(right.hitbox.centerx-left.hitbox.centerx)
         circle_distance_y = abs(right.hitbox.centery-left.hitbox.centery)
         if circle_distance_x > left.hitbox.w/2.0+right.radius or circle_distance_y > left.hitbox.h/2.0+right.radius:
@@ -109,9 +112,10 @@ class World(State):
             pos = level_data[i]["px"]
             src = level_data[i]["src"]
             tile_id = level_data[i]["t"]
+            flip = bool(level_data[i]["f"])
             new_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
             new_surf.blit(image, (0, 0), pygame.Rect(src[0], src[1], TILE_SIZE, TILE_SIZE))
-            tile = StaticTile(tile_id, pos, new_surf)
+            tile = StaticTile(tile_id, pos, flip, new_surf)
             #tile_group.add(tile)
             self.all_sprites.add(tile)
             if tile.id == 4 or tile.id == 0 or tile.id == 7:
@@ -131,6 +135,9 @@ class World(State):
                 self.player = Player(self, pos)
                 self.dependants.add(self.player)
                 self.all_sprites.add(self.player)
+            elif id == "Gate":
+                self.gate = Gate(self, pos)
+                self.all_sprites.add(self.gate)
             else:
                 if id == "Ninja":
                     path_points = entity_data[i]["fieldInstances"][0]["__value"]
@@ -144,20 +151,21 @@ class World(State):
     def update(self, dt, inputs):
         self.dt = dt
         if inputs["enter"]:
-            new_state = PauseMenu(self.game)
+            new_state = PauseMenu(self.game, self)
             new_state.enter_state()
         self.dependants.update(self.dt, inputs, self.collision_tiles)
         self.mob_attacks.update(self.dt)
         self.mobs.update(self.dt, self.collision_tiles)
-        sword_hits = pygame.sprite.groupcollide(self.mobs, self.attacks, False, False)
+        sword_hits = pygame.sprite.groupcollide(self.mobs, self.attacks, False, False, self.collide_rect_circle_hitbox)
         for hit in sword_hits:
             if not hit.invincible:
+                #self.mobs.empty()
                 hit.health -= 1
                 hit.iframe()
                 hit.attack_time = pygame.time.get_ticks()
                 hit.should_attack = True
         #player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
-        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, False, self.collide_hitbox)
+        mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, True, self.collide_hitbox)
         mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False, self.collide_hitbox)
         if not self.player.invincible:
             for hit in mob_melee_hits:
@@ -166,22 +174,21 @@ class World(State):
             for hit in mob_hits:
                 self.player.health -= 1
                 self.player.iframe()
-            #if player_hits:
-            #    self.player.health -= 1
-            #    self.player.iframe()
-
-            #if self.player.health <= 0 or self.player.rect.bottom >= HEIGHT:
-                #self.exit_state()
-
+        player_leave = self.collide_hitbox(self.player, self.gate)
+        if player_leave and len(self.mobs) <= 0:
+            if abs(self.player.hitbox.centerx - self.gate.hitbox.centerx) <= 10:
+                self.exit_state()
+        if self.player.health <= 0 or self.leave_state:
+                self.exit_state()
+        #print(bool(self.mobs))
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, False, True, pygame.sprite.collide_circle)
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
 
     def draw_health(self, display, x, y, health):
         for i in range(health):
-            heart_img = pygame.Surface((10, 10))
-            heart_img.fill(RED)
+            heart_img = pygame.image.load(path.join(self.game.assets_dir, "heart.png")).convert_alpha()
             heart_rect = heart_img.get_rect()
-            heart_rect.centerx = x+15*i
+            heart_rect.centerx = x+20*i
             heart_rect.centery = y
             display.blit(heart_img, heart_rect)
 

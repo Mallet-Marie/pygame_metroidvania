@@ -58,5 +58,11 @@ Timeline for Samurai game:
 	grappling hook
 	bosses
 description:
-	Retribution is a 2d action platformer where you fight samurai in feudal japan.
+	Retribution is a difficult 2d action platformer where you play as a ronin, fighting invaders
+	who conquered your land and killed your master.
 	Fight, kill, die, and grow stronger as you seek revenge for your fallen clan.
+for presentation:
+	add more pictures to presentation
+	dont read from slides
+	look at camera
+	add music/sfx

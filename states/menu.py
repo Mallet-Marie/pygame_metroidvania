@@ -72,3 +72,11 @@ class Mouse(pygame.sprite.Sprite):
     
     def update(self):
         self.rect.center = pygame.mouse.get_pos()
+        if self.rect.centerx >= WIDTH:
+            self.rect.centerx = WIDTH
+        elif self.rect.centerx <= 0:
+            self.rect.centerx = 0
+        if self.rect.centery >= HEIGHT:
+            self.rect.centery = HEIGHT
+        elif self.rect.centery <= 0:
+            self.rect.centery = 0

@@ -5,9 +5,10 @@ from states.options import Options
 from settings import *
 
 class PauseMenu(State):
-    def __init__(self, game):
+    def __init__(self, game, world):
         State.__init__(self, game)
         self.game = game
+        self.world = world
         self.index = 0
         self.buttons = pygame.sprite.Group()
         self.start_button = Button(self.game, WIDTH/4, 80, "continue.png","continue")
@@ -33,8 +34,8 @@ class PauseMenu(State):
                     new_state = Options(self.game)
                     new_state.enter_state()
                 elif hover.key == "quit":
-                    self.game.running = False
-                    self.game.playing = False
+                    self.world.leave_state = True
+                    self.exit_state()
         self.game.reset_keys()
 
 
@@ -69,3 +70,11 @@ class Mouse(pygame.sprite.Sprite):
     
     def update(self):
         self.rect.center = pygame.mouse.get_pos()
+        if self.rect.centerx >= WIDTH:
+            self.rect.centerx = WIDTH
+        elif self.rect.centerx <= 0:
+            self.rect.centerx = 0
+        if self.rect.centery >= HEIGHT:
+            self.rect.centery = HEIGHT
+        elif self.rect.centery <= 0:
+            self.rect.centery = 0

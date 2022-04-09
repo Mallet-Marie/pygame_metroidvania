@@ -16,12 +16,12 @@ class Player(pygame.sprite.Sprite):
         self.hitbox = self.image.get_rect()
         self.hitbox.inflate_ip(-104, -70)
         self.hitbox.move_ip(0, 35)
-        pygame.draw.rect(self.image, RED, self.rect, 1)
-        pygame.draw.rect(self.image, GREEN, self.hitbox, 1)
+        #pygame.draw.rect(self.image, RED, self.rect, 1)
+        #pygame.draw.rect(self.image, GREEN, self.hitbox, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
         self.hitbox.center = self.rect.centerx, self.rect.centery+29
-        self.health = 5
+        self.health = 10
         self.velx = 0
         self.vely = 0
         self.acc = .5
@@ -33,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.invincible = False
         #self.hit = False
         self.been_hit = False
-        pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
+        #pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
         self.iframes = pygame.time.get_ticks()
 
     def horizontal_movement(self, tiles):
@@ -89,7 +89,6 @@ class Player(pygame.sprite.Sprite):
         self.invincible = True
     
     def update(self, dt, inputs, tiles):
-        print(self.vely)
         if self.hitbox.colliderect(self.game.visible_rect):
             self.inputs = inputs
             self.dx = self.inputs["right"] - self.inputs["left"]
@@ -102,6 +101,8 @@ class Player(pygame.sprite.Sprite):
                 self.hitbox.x = 0
                 self.rect.x = -52
             self.horizontal_movement(tiles)
+            if self.health <= 0:
+                self.kill()
         # if self.jumping:
             #  print(self.rect.x)
             if self.inputs["up"] and not self.jumping and self.jumps > 0:
@@ -143,7 +144,8 @@ class Sword(pygame.sprite.Sprite):
         if rad:
             self.radius = rad
             self.image.set_colorkey(BLACK)
-            pygame.draw.circle(self.image, RED, self.rect.center, self.radius, 2)
+            if self.radius != 44:
+                pygame.draw.circle(self.image, RED, self.rect.center, self.radius, 2)
         self.posx, self.posy = x, y
         self.rect.center = self.posx, self.posy
         self.hitbox.center = self.posx, self.posy
@@ -167,7 +169,7 @@ class Shuriken(pygame.sprite.Sprite):
     def __init__(self, x, y, angle, game):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
-        self.image = pygame.Surface((5, 5))
+        self.image = pygame.Surface((8, 8))
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.hitbox = self.rect.copy()
@@ -199,8 +201,8 @@ class Ninja(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.hitbox.inflate_ip(-100, -68)
         self.hitbox.move_ip(0, 36)
-        pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
-        pygame.draw.rect(self.image, RED, self.rect, 1)
+        #pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
+        #pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
         self.hitbox.center = self.rect.centerx, self.rect.centery+30
@@ -306,8 +308,6 @@ class Ninja(pygame.sprite.Sprite):
             if abs(self.dx_player) < 350 and abs(self.dx_player) > 100 and not self.attacking :
                 self.rot = math.atan2(self.dy_player, self.dx_player)
                 self.throw()
-            if self.should_attack:
-                self.attack()
             if self.attacking:
                 if self.dx_sword == 1:
                     self.sword.update(self.posx+64, self.posy+32, self)
@@ -335,8 +335,8 @@ class Samurai(pygame.sprite.Sprite):
         self.hitbox = self.image.get_rect()
         self.hitbox.inflate_ip(-96, -64)
         self.hitbox.move_ip(0, 32)
-        pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
-        pygame.draw.rect(self.image, RED, self.rect, 1)
+        #pygame.draw.rect(self.image, GREEN, self.hitbox, 1) #hitbox
+        #pygame.draw.rect(self.image, RED, self.rect, 1)
         self.rect.topleft = pos[0], pos[1]
         self.posx, self.posy = self.rect.topleft
         self.hitbox.center = self.rect.centerx, self.rect.centery+32
@@ -477,6 +477,8 @@ class Samurai(pygame.sprite.Sprite):
             self.sword = Sword(self.hitbox.x, self.hitbox.y+16, 88, 88, 44, self.game)
         elif self.dx == 1:
             self.sword = Sword(self.hitbox.x+32, self.hitbox.y+16, 88, 88, 44, self.game)
+        else:
+            self.sword = Sword(self.hitbox.x, self.hitbox.y+16, 88, 88, 44, self.game)
         self.game.mob_melee.add(self.sword)
         self.game.all_sprites.add(self.sword)
     
@@ -514,6 +516,9 @@ class Samurai(pygame.sprite.Sprite):
                 self.should_attack = True
             else:
                 self.should_attack = False
+
+            if self.health <= 0:
+                self.kill()
 
             if self.attacking:
                 self.velx = dt * self.dx * 2.5
@@ -581,3 +586,12 @@ class Samurai(pygame.sprite.Sprite):
                 self.facing_left = True
                 self.facing_right = False
             self.animate(dt)
+
+class Gate(pygame.sprite.Sprite):
+    def __init__(self, game, pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.game = game
+        self.image = pygame.image.load(path.join(self.game.game.assets_dir, "torii.png")).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = pos
+        self.hitbox = self.rect.copy()
