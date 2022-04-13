@@ -57,6 +57,10 @@ Timeline for Samurai game:
 	enemies
 	grappling hook
 	bosses
+	remappable controls
+	music/sfx
+	particle effect when sword/shuriken collides
+	win screen and lose screen
 description:
 	Retribution is a difficult 2d action platformer where you play as a ronin, fighting invaders
 	who conquered your land and killed your master.
@@ -66,3 +70,5 @@ for presentation:
 	dont read from slides
 	look at camera
 	add music/sfx
+build:
+	python -m nuitka --standalone --onefile --windows-disable-console --windows-icon-from-ico=retribution.png game.py

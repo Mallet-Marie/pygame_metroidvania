@@ -1,7 +1,7 @@
 # Define variables thta don't change
 WIDTH = 640
 HEIGHT = 360
-FPS = 120
+FPS = 60
 TILE_SIZE = 24
 # Colors
 WHITE = (255, 255, 255)
