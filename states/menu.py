@@ -11,39 +11,95 @@ class MainMenu(State):
         self.game = game
         self.index = 0
         self.buttons = pygame.sprite.Group()
+        self.dead_buttons = pygame.sprite.Group()
+        self.replay_buttons = pygame.sprite.Group()
         self.start_button = Button(self.game, WIDTH/4, 80, "start.png","start")
         self.options_button = Button(self.game, WIDTH/4, 180, "options.png", "options")
         self.quit_button = Button(self.game, WIDTH/4, 280, "quit.png", "quit")
+        self.retry_button = Button(self.game, WIDTH/5, 320, "retry.png", "retry")
+        self.retmenu_button = Button(self.game, WIDTH/2, 320, "retmenu.png", "retmenu")
+        self.quitdesk_button = Button(self.game, WIDTH - WIDTH/5, 320, "quitdesk.png", "quitdesk")
+        self.replay_button = Button(self.game, WIDTH/5, 320, "replay.png", "replay")
+        self.dead_image = pygame.image.load(path.join(self.game.assets_dir, "death_screen.png")).convert()
+        self.win_image = pygame.image.load(path.join(self.game.assets_dir, "win_screen.png")).convert()
+        self.dead_rect = self.dead_image.get_rect()
         self.buttons.add(self.start_button)
         self.buttons.add(self.options_button)
         self.buttons.add(self.quit_button)
+        self.dead_buttons.add(self.retry_button)
+        self.dead_buttons.add(self.retmenu_button)
+        self.dead_buttons.add(self.quitdesk_button)
+        self.replay_buttons.add(self.replay_button)
+        self.replay_buttons.add(self.retmenu_button)
+        self.replay_buttons.add(self.quitdesk_button)
         self.mouse = Mouse(game)
         self.prev_state = self.game.title_screen
         self.hovered = None
     
     def update(self, dt, inputs):
         self.mouse.update()
-        hovers = pygame.sprite.spritecollide(self.mouse, self.buttons, False)
-        self.hovered = None
-        for hover in hovers:
-            self.hovered = hover
-            pressed = pygame.mouse.get_pressed()
-            if pressed[0]:
-                if hover.key == "start":
-                    new_state = World(self.game)
-                    new_state.enter_state()
-                elif hover.key == "options":
-                    new_state = Options(self.game)
-                    new_state.enter_state()
-                elif hover.key == "quit":
-                    self.game.running = False
-                    self.game.playing = False
+        if not self.player_dead and not self.player_win:
+            hovers = pygame.sprite.spritecollide(self.mouse, self.buttons, False)
+            self.hovered = None
+            for hover in hovers:
+                self.hovered = hover
+                if inputs["l_click"]:
+                    if hover.key == "start":
+                        new_state = World(self.game)
+                        new_state.enter_state()
+                    elif hover.key == "options":
+                        new_state = Options(self.game)
+                        new_state.enter_state()
+                    elif hover.key == "quit":
+                        self.game.running = False
+                        self.game.playing = False
+        
+        elif self.player_dead and not self.player_win:
+            hovers = pygame.sprite.spritecollide(self.mouse, self.dead_buttons, False)
+            self.hovered = None
+            for hover in hovers:
+                self.hovered = hover
+                if inputs["l_click"]:
+                    if hover.key == "retry":
+                        new_state = World(self.game)
+                        new_state.enter_state()
+                    elif hover.key == "retmenu":
+                        self.player_win = False
+                        self.player_dead = False
+                    elif hover.key == "quitdesk":
+                        self.game.running = False
+                        self.game.playing = False
+        
+        elif not self.player_dead and self.player_win:
+            hovers = pygame.sprite.spritecollide(self.mouse, self.replay_buttons, False)
+            self.hovered = None
+            for hover in hovers:
+                self.hovered = hover
+                if inputs["l_click"]:
+                    if hover.key == "replay":
+                        new_state = World(self.game)
+                        new_state.enter_state()
+                    elif hover.key == "retmenu":
+                        self.player_win = False
+                        self.player_dead = False
+                    elif hover.key == "quitdesk":
+                        self.game.running = False
+                        self.game.playing = False
+
         self.game.reset_keys()
 
 
     def draw(self, display):
-        self.prev_state.draw(display)
-        self.buttons.draw(display)
+        if not self.player_dead and not self.player_win:
+            self.prev_state.draw(display)
+            self.buttons.draw(display)
+        elif self.player_dead and not self.player_win:
+            display.blit(self.dead_image, self.dead_rect)
+            self.dead_buttons.draw(display)
+        elif self.player_win and not self.player_dead:
+            display.blit(self.win_image, self.dead_rect)
+            self.replay_buttons.draw(display)
+
         if self.hovered:
             display.blit(self.hovered.fade, self.hovered.rect)
         display.blit(self.mouse.image, self.mouse.rect)
@@ -53,11 +109,11 @@ class Button(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
         self.key = key
-        self.image = pygame.image.load(path.join(self.game.assets_dir, img)).convert()
-        self.fade = pygame.Surface((120, 60))
+        self.image = pygame.image.load(path.join(self.game.assets_dir, img)).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.fade = pygame.Surface((self.rect.width, self.rect.height))
         self.fade.set_alpha(100)
         self.fade.fill(BLACK)
-        self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
 class Mouse(pygame.sprite.Sprite):

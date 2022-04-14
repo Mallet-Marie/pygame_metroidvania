@@ -1,6 +1,7 @@
 import pygame
 import json
 from os import path
+import math
 from states.state import State 
 from states.pause import PauseMenu
 from settings import *
@@ -27,8 +28,12 @@ class StaticTile(Tile):
     def __init__(self, id, pos, flip, surface):
         Tile.__init__(self, id, pos)
         self.image = surface
-        if flip:
+        if flip == 1:
             self.image = pygame.transform.flip(self.image, True, False)
+        elif flip == 2:
+            self.image = pygame.transform.flip(self.image, False, True)
+        elif flip == 3:
+            self.image = pygame.transform.flip(self.image, True, True)
 
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, game):
@@ -43,7 +48,7 @@ class CameraGroup(pygame.sprite.Group):
         self.cam_width = WIDTH - (self.cam_left + self.cam_right)
         self.cam_height = HEIGHT - (self.cam_top + self.cam_bottom)
         self.camera_rect = pygame.Rect(self.cam_left, self.cam_top, self.cam_width, self.cam_height)
-        self.visible_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
+        self.visible_rect = pygame.Rect(-50, -50, WIDTH+100, HEIGHT+100)
 
     def custom_draw(self, display, player):
         self.offsetx, self.offsety = self.camera_rect.left - self.cam_left, self.camera_rect.top - self.cam_top
@@ -57,13 +62,70 @@ class CameraGroup(pygame.sprite.Group):
             self.camera_rect.top = player.hitbox.top
         if player.hitbox.bottom > self.camera_rect.bottom and (player.hitbox.bottom < 456 or player.hitbox.bottom > 504):
             self.camera_rect.bottom = player.hitbox.bottom
-        self.visible_rect.topleft = self.camera_rect.x-200, self.camera_rect.y-50
+        self.visible_rect.topleft = self.camera_rect.x-250, self.camera_rect.y-100
         self.game.visible_rect.topleft = self.visible_rect.topleft
         for sprite in self.sprites():
             if self.visible_rect.colliderect(sprite.hitbox):
                 offset_x = sprite.rect.x - self.offsetx
                 offset_y = sprite.rect.y - self.offsety
                 display.blit(sprite.image, (offset_x, offset_y))
+
+class Spark():
+    def __init__(self, loc, angle, speed, color, scale=1):
+        self.loc = loc
+        self.angle = angle
+        self.speed = speed
+        self.scale = scale
+        self.color = color
+        self.alive = True
+
+    def point_towards(self, angle, rate):
+        rotate_direction = ((angle - self.angle + math.pi * 3) % (math.pi * 2)) - math.pi
+        try:
+            rotate_sign = abs(rotate_direction) / rotate_direction
+        except ZeroDivisionError:
+            rotate_sing = 1
+        if abs(rotate_direction) < rate:
+            self.angle = angle
+        else:
+            self.angle += rate * rotate_sign
+
+    def calculate_movement(self, dt):
+        return [math.cos(self.angle) * self.speed * dt, math.sin(self.angle) * self.speed * dt]
+
+
+    # gravity and friction
+    def velocity_adjust(self, friction, force, terminal_velocity, dt):
+        movement = self.calculate_movement(dt)
+        movement[1] = min(terminal_velocity, movement[1] + force * dt)
+        movement[0] *= friction
+        self.angle = math.atan2(movement[1], movement[0])
+        # if you want to get more realistic, the speed should be adjusted here
+
+    def move(self, dt):
+        movement = self.calculate_movement(dt)
+        self.loc[0] += movement[0]
+        self.loc[1] += movement[1]
+
+        # a bunch of options to mess around with relating to angles...
+        self.point_towards(math.pi / 2, 0.02)
+        #self.velocity_adjust(0.975, 0.2, 8, dt)
+        #self.angle += 0.1
+
+        self.speed -= 0.3
+
+        if self.speed <= 0:
+            self.alive = False
+
+    def draw(self, surf, offset=[0, 0]):
+        if self.alive:
+            points = [
+                [self.loc[0] + math.cos(self.angle) * self.speed * self.scale,self.loc[1] + math.sin(self.angle) * self.speed * self.scale],
+                [self.loc[0] + math.cos(self.angle + math.pi / 2) * self.speed * self.scale * 0.3,+ self.loc[1] + math.sin(self.angle + math.pi / 2) * self.speed * self.scale * 0.3],
+                [self.loc[0] - math.cos(self.angle) * self.speed * self.scale * 3.5,self.loc[1] - math.sin(self.angle) * self.speed * self.scale * 3.5],
+                [self.loc[0] + math.cos(self.angle - math.pi / 2) * self.speed * self.scale * 0.3,self.loc[1] - math.sin(self.angle + math.pi / 2) * self.speed * self.scale * 0.3],
+                ]
+            pygame.draw.polygon(surf, self.color, points)
 
 class World(State):
     def __init__(self, game):
@@ -80,8 +142,10 @@ class World(State):
         self.spawn_sprites()
         self.image = pygame.image.load(path.join(self.game.assets_dir, "forest.png")).convert_alpha()
         self.rect = self.image.get_rect()
-        self.visible_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
+        self.visible_rect = pygame.Rect(-50, -50, WIDTH+100, HEIGHT+100)
         self.leave_state = False
+        self.sparks = []
+        self.offset = [0, 0]
         #print(self.all_sprites.sprites())
 
     def collide_hitbox(self, left, right):
@@ -103,7 +167,7 @@ class World(State):
         return corner_distance_sq <= right.radius**2.0
 
     def create_tile_group(self):
-        image = pygame.image.load(path.join(self.game.assets_dir, "tileset3.png")).convert_alpha()
+        image = pygame.image.load(path.join(self.game.assets_dir, "tileset4.png")).convert_alpha()
         with open("map4.ldtk", "r") as map_file:
             map_data = json.load(map_file)
         #tile_group = pygame.sprite.Group()
@@ -112,16 +176,23 @@ class World(State):
             pos = level_data[i]["px"]
             src = level_data[i]["src"]
             tile_id = level_data[i]["t"]
-            flip = bool(level_data[i]["f"])
-            new_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
+            flip = level_data[i]["f"]
+            new_surf = pygame.Surface((TILE_SIZE, TILE_SIZE), flags = SRCALPHA).convert_alpha()
             new_surf.blit(image, (0, 0), pygame.Rect(src[0], src[1], TILE_SIZE, TILE_SIZE))
             tile = StaticTile(tile_id, pos, flip, new_surf)
             #tile_group.add(tile)
             self.all_sprites.add(tile)
-            if tile.id == 4 or tile.id == 0 or tile.id == 7:
+            if tile.id == 0 or tile.id == 6 or tile.id == 9 or tile.id == 4 or tile.id == 5:
                 self.collision_tiles.add(tile)
             self.all_sprites.add()
         map_file.close()
+
+    def handle_sparks(self, dt, display):
+        for i, spark in sorted(enumerate(self.sparks), reverse=True):
+            spark.move(dt)
+            spark.draw(display)
+            if not spark.alive:
+                self.sparks.pop(i)
 
     def spawn_sprites(self):
         with open("map4.ldtk", "r") as map_file:
@@ -177,12 +248,29 @@ class World(State):
         player_leave = self.collide_hitbox(self.player, self.gate)
         if player_leave and len(self.mobs) <= 0:
             if abs(self.player.hitbox.centerx - self.gate.hitbox.centerx) <= 10:
+                self.prev_state.player_win = True
+                self.prev_state.player_dead = False
                 self.exit_state()
-        if self.player.health <= 0 or self.leave_state:
-                self.exit_state()
+        if self.player.health <= 0:
+            self.prev_state.player_dead = True
+            self.prev_state.player_win = False
+            self.exit_state()
+        elif self.leave_state:
+            self.exit_state()
         #print(bool(self.mobs))
+        mx, my = pygame.mouse.get_pos()
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, False, True, pygame.sprite.collide_circle)
+        for hit in parry_hits:
+            self.offset[0] = 64 + hit.hitbox.x - self.all_sprites.offsetx
+            self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
+            for i in range(25):    
+                self.sparks.append(Spark([self.offset[0], self.offset[1]], math.radians(random.randint(0, 360)), random.randint(3, 6), (235, 130, 0), 2))
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
+        for hit in mob_melee_parry:
+            self.offset[0] = 64 + hit.hitbox.x - self.all_sprites.offsetx
+            self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
+            for i in range(25):    
+                self.sparks.append(Spark([self.offset[0], self.offset[1]], math.radians(random.randint(0, 360)), random.randint(3, 6), (235, 130, 0), 2))
 
     def draw_health(self, display, x, y, health):
         for i in range(health):
@@ -197,4 +285,5 @@ class World(State):
         #display.fill(WHITE)
         # *after* drawing everything, flip the display
         self.all_sprites.custom_draw(display, self.player)
+        self.handle_sparks(self.game.dt, self.game.canvas)
         self.draw_health(display, 10, 10, self.player.health)

@@ -26,8 +26,7 @@ class PauseMenu(State):
         self.hovered = None
         for hover in hovers:
             self.hovered = hover
-            pressed = pygame.mouse.get_pressed()
-            if pressed[0]:
+            if inputs["l_click"]:
                 if hover.key == "continue":
                     self.exit_state()
                 elif hover.key == "options":

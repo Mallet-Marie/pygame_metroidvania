@@ -2,6 +2,7 @@ class State():
     def __init__(self, game):
         self.game = game
         self.prev_state = None
+        self.player_dead, self.player_win = False, False
 
     def update(self, dt, inputs):
         pass
