@@ -56,7 +56,7 @@ class CameraGroup(pygame.sprite.Group):
         
         if player.hitbox.left < self.camera_rect.left and player.hitbox.left > 200:
             self.camera_rect.left = player.hitbox.left
-        if player.hitbox.right > self.camera_rect.right:
+        if player.hitbox.right > self.camera_rect.right and player.hitbox.right < 3600:
             self.camera_rect.right = player.hitbox.right
         if player.hitbox.top < self.camera_rect.top:
             self.camera_rect.top = player.hitbox.top
@@ -138,6 +138,9 @@ class World(State):
         self.mob_attacks = pygame.sprite.Group()
         self.mob_melee = pygame.sprite.Group()
         self.collision_tiles = pygame.sprite.Group()
+        self.heart_img = pygame.image.load(path.join(self.game.assets_dir, "heart.png")).convert_alpha()
+        self.half_heart_img = pygame.image.load(path.join(self.game.assets_dir, "half_heart.png")).convert_alpha()
+        self.empty_heart_img = pygame.image.load(path.join(self.game.assets_dir, "empty_heart.png")).convert_alpha()
         self.create_tile_group()
         self.spawn_sprites()
         self.image = pygame.image.load(path.join(self.game.assets_dir, "forest.png")).convert_alpha()
@@ -168,7 +171,7 @@ class World(State):
 
     def create_tile_group(self):
         image = pygame.image.load(path.join(self.game.assets_dir, "tileset4.png")).convert_alpha()
-        with open("map4.ldtk", "r") as map_file:
+        with open("map.ldtk", "r") as map_file:
             map_data = json.load(map_file)
         #tile_group = pygame.sprite.Group()
         level_data = map_data["levels"][0]["layerInstances"][1]["gridTiles"]
@@ -195,7 +198,7 @@ class World(State):
                 self.sparks.pop(i)
 
     def spawn_sprites(self):
-        with open("map4.ldtk", "r") as map_file:
+        with open("map.ldtk", "r") as map_file:
             map_data = json.load(map_file)
         tile_group = pygame.sprite.Group()
         entity_data = map_data["levels"][0]["layerInstances"][0]["entityInstances"]
@@ -237,44 +240,65 @@ class World(State):
                 hit.should_attack = True
         #player_hits = pygame.sprite.spritecollide(self.player, self.mobs, False)
         mob_hits = pygame.sprite.spritecollide(self.player, self.mob_attacks, True, self.collide_hitbox)
-        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, False, self.collide_hitbox)
+        mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, True, self.collide_hitbox)
         if not self.player.invincible:
             for hit in mob_melee_hits:
-                self.player.health -= 1
-                self.player.iframe()
+                self.player.health -= 2
+                self.player.iframe(False)
             for hit in mob_hits:
                 self.player.health -= 1
-                self.player.iframe()
+                self.player.iframe(False)
         player_leave = self.collide_hitbox(self.player, self.gate)
         if player_leave and len(self.mobs) <= 0:
             if abs(self.player.hitbox.centerx - self.gate.hitbox.centerx) <= 10:
                 self.prev_state.player_win = True
                 self.prev_state.player_dead = False
                 self.exit_state()
-        if self.player.health <= 0:
-            self.prev_state.player_dead = True
-            self.prev_state.player_win = False
-            self.exit_state()
+        if len(self.player.groups()) == 1:
+            now = pygame.time.get_ticks()
+            if now-self.player.end_game>1000:
+                self.prev_state.player_dead = True
+                self.prev_state.player_win = False
+                self.exit_state()
         elif self.leave_state:
             self.exit_state()
         #print(bool(self.mobs))
         mx, my = pygame.mouse.get_pos()
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, False, True, pygame.sprite.collide_circle)
         for hit in parry_hits:
-            self.offset[0] = 64 + hit.hitbox.x - self.all_sprites.offsetx
-            self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
-            for i in range(25):    
+            self.player.iframe(True)
+            if self.player.facing_left:
+                self.offset[0] = hit.hitbox.x - self.all_sprites.offsetx
+                self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
+            elif self.player.facing_right:
+                self.offset[0] = 64 + hit.hitbox.x - self.all_sprites.offsetx
+                self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
+            for i in range(10):    
                 self.sparks.append(Spark([self.offset[0], self.offset[1]], math.radians(random.randint(0, 360)), random.randint(3, 6), (235, 130, 0), 2))
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
         for hit in mob_melee_parry:
-            self.offset[0] = 64 + hit.hitbox.x - self.all_sprites.offsetx
-            self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
-            for i in range(25):    
+            self.player.iframe(True)
+            if self.player.facing_left:
+                self.offset[0] = hit.hitbox.x - self.all_sprites.offsetx
+                self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
+            elif self.player.facing_right:
+                self.offset[0] = 64 + hit.hitbox.x - self.all_sprites.offsetx
+                self.offset[1] = 32 + hit.hitbox.y - self.all_sprites.offsety
+
+            for i in range(20):    
                 self.sparks.append(Spark([self.offset[0], self.offset[1]], math.radians(random.randint(0, 360)), random.randint(3, 6), (235, 130, 0), 2))
 
     def draw_health(self, display, x, y, health):
-        for i in range(health):
-            heart_img = pygame.image.load(path.join(self.game.assets_dir, "heart.png")).convert_alpha()
+        
+        for i in range(int(20/2)):
+            if int(health/2)>i:
+                heart_img = self.heart_img
+            elif health/2-int(health/2)!=0 and int(health/2)==i:
+                heart_img = self.half_heart_img
+            elif health<=0:
+                heart_img = self.empty_heart_img
+            else:
+                heart_img = self.empty_heart_img
             heart_rect = heart_img.get_rect()
             heart_rect.centerx = x+20*i
             heart_rect.centery = y

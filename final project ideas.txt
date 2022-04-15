@@ -59,7 +59,6 @@ Timeline for Samurai game:
 	bosses
 	remappable controls
 	music/sfx
-	win screen and lose screen
 description:
 	Retribution is a difficult 2d action platformer where you play as a ronin, fighting invaders
 	who conquered your land and killed your master.

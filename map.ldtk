@@ -5,11 +5,11 @@
 		"doc": "https://ldtk.io/json",
 		"schema": "https://ldtk.io/files/JSON_SCHEMA.json",
 		"appAuthor": "Sebastien 'deepnight' Benard",
-		"appVersion": "1.1.1",
+		"appVersion": "1.1.2",
 		"url": "https://ldtk.io"
 	},
-	"jsonVersion": "1.1.1",
-	"appBuildId": 458076,
+	"jsonVersion": "1.1.2",
+	"appBuildId": 458319,
 	"nextUid": 18,
 	"identifierStyle": "Capitalize",
 	"worldLayout": "Free",
@@ -432,7 +432,7 @@
 						},
 						{
 							"__identifier": "Ninja",
-							"__grid": [79,34],
+							"__grid": [70,37],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": { "tilesetUid": 2, "x": 64, "y": 0, "w": 64, "h": 64 },
@@ -441,10 +441,10 @@
 							"width": 64,
 							"height": 64,
 							"defUid": 5,
-							"px": [632,272],
-							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 79, "cy": 33 }, { "cx": 125, "cy": 29 }, { "cx": 133, "cy": 50 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
+							"px": [560,296],
+							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 70, "cy": 36 }, { "cx": 125, "cy": 29 }, { "cx": 133, "cy": 50 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
 								"id": "V_String",
-								"params": ["79,33"]
+								"params": ["70,36"]
 							}, {
 								"id": "V_String",
 								"params": ["125,29"]
@@ -469,7 +469,7 @@
 						},
 						{
 							"__identifier": "Ninja",
-							"__grid": [181,52],
+							"__grid": [171,55],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": { "tilesetUid": 2, "x": 64, "y": 0, "w": 64, "h": 64 },
@@ -478,10 +478,10 @@
 							"width": 64,
 							"height": 64,
 							"defUid": 5,
-							"px": [1448,416],
-							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 182, "cy": 51 }, { "cx": 133, "cy": 50 }, { "cx": 230, "cy": 67 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
+							"px": [1368,440],
+							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 172, "cy": 54 }, { "cx": 133, "cy": 50 }, { "cx": 230, "cy": 67 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
 								"id": "V_String",
-								"params": ["182,51"]
+								"params": ["172,54"]
 							}, {
 								"id": "V_String",
 								"params": ["133,50"]
@@ -506,7 +506,7 @@
 						},
 						{
 							"__identifier": "Ninja",
-							"__grid": [217,25],
+							"__grid": [229,28],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": { "tilesetUid": 2, "x": 64, "y": 0, "w": 64, "h": 64 },
@@ -515,13 +515,13 @@
 							"width": 64,
 							"height": 64,
 							"defUid": 5,
-							"px": [1736,200],
-							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 210, "cy": 25 }, { "cx": 230, "cy": 67 }, { "cx": 177, "cy": 28 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
+							"px": [1832,224],
+							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 231, "cy": 27 }, { "cx": 287, "cy": 52 }, { "cx": 177, "cy": 28 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
 								"id": "V_String",
-								"params": ["210,25"]
+								"params": ["231,27"]
 							}, {
 								"id": "V_String",
-								"params": ["230,67"]
+								"params": ["287,52"]
 							}, {
 								"id": "V_String",
 								"params": ["177,28"]
@@ -540,29 +540,6 @@
 							"defUid": 6,
 							"px": [3336,632],
 							"fieldInstances": []
-						},
-						{
-							"__identifier": "Ninja",
-							"__grid": [400,43],
-							"__pivot": [0,0],
-							"__tags": [],
-							"__tile": { "tilesetUid": 2, "x": 64, "y": 0, "w": 64, "h": 64 },
-							"__smartColor": "#94D9B3",
-							"iid": "3bfb38b0-b4d0-11ec-b4c6-6762f08402f1",
-							"width": 64,
-							"height": 64,
-							"defUid": 5,
-							"px": [3200,344],
-							"fieldInstances": [{ "__identifier": "Point", "__value": [ { "cx": 400, "cy": 42 }, { "cx": 348, "cy": 53 }, { "cx": 392, "cy": 77 } ], "__type": "Array<Point>", "__tile": null, "defUid": 9, "realEditorValues": [ {
-								"id": "V_String",
-								"params": ["400,42"]
-							}, {
-								"id": "V_String",
-								"params": ["348,53"]
-							}, {
-								"id": "V_String",
-								"params": ["392,77"]
-							} ] }]
 						},
 						{
 							"__identifier": "Ninja",
