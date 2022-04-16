@@ -8,6 +8,7 @@ from settings import *
 class Game():
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
         self.joysticks = []
         for i in range(pygame.joystick.get_count()):
             self.joysticks.append(pygame.joystick.Joystick(i))
@@ -23,9 +24,15 @@ class Game():
         self.samurai_anims = {"l_walk": [], "r_walk": [], "l_attack": [], "r_attack": [], "l_idle": [], "r_idle": [], "l_hit": [], "r_hit": [], "l_kill": [], "r_kill": []}
         self.player_anims = {"l_walk": [], "r_walk": [], "l_attack": [], "r_attack": [], "l_idle": [], "r_idle": [], "l_hit": [], "r_hit": [], "l_kill": [], "r_kill": []}
         self.ninja_anims = {"l_walk": [], "r_walk": [], "l_attack": [], "r_attack": [], "l_idle": [], "r_idle": [], "l_hit": [], "r_hit": [], "l_kill": [], "r_kill": []}
+        self.sword_sounds = {"sh_parry": None, "sw_parry": None, "n_hit": None, "s_hit": None}
+        self.volumes = None
         self.load_assets()
         self.load_states()
         self.clock = pygame.time.Clock()
+        pygame.mixer.music.load(path.join(self.aud_dir, 'Boss Battle #2 V2.wav'))
+        pygame.mixer.music.play(loops=-1)
+        pygame.mixer.music.set_volume(self.volumes["music"])
+        self.playing_music = True
 
     def game_loop(self):
         while self.playing:
@@ -65,6 +72,10 @@ class Game():
                     self.inputs["up"] = True
                 if event.button == 1:
                     self.inputs["space"] = True
+                if event.button == 2:
+                    self.inputs["enter"] = True
+                if event.button == 3:
+                    self.inputs["back"] = True
             if event.type == pygame.JOYHATMOTION:
                 if event.value[0] == 1:
                     self.inputs["right"] = True
@@ -75,9 +86,6 @@ class Game():
                 if event.value[0] == 0:
                     self.inputs["right"] = False
                     self.inputs["left"] = False
-            if event.type == JOYAXISMOTION:
-                print(event.axis)
-                print(event.value)
             if event.type == pygame.KEYUP:
                 if event.key == K_d:
                     self.inputs["right"] = False
@@ -101,6 +109,10 @@ class Game():
                     self.inputs["up"] = False
                 if event.button == 1:
                     self.inputs["space"] = False
+                if event.button == 2:
+                    self.inputs["enter"] = False
+                if event.button == 3:
+                    self.inputs["back"] = False
     
     def update(self):
         self.state_stack[-1].update(self.dt, self.inputs)
@@ -515,7 +527,13 @@ class Game():
         self.assets_dir = path.join("assets")
         self.sprite_dir = path.join(self.assets_dir, "sprites")
         self.font_dir = path.join(self.assets_dir, "font")
+        self.aud_dir = path.join(self.assets_dir, "audio")
+        self.load_volumes()
 
+        self.sword_sounds["sh_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash.2.ogg'))
+        self.sword_sounds["sw_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash.1.ogg'))
+        self.sword_sounds["n_hit"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword-1a.wav'))
+        self.sword_sounds["s_hit"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword-arm-2b.wav'))
         self.load_samurai_anims()
         self.load_player_anims()
         self.load_ninja_anims()
@@ -537,6 +555,28 @@ class Game():
     def reset_keys(self):
         for input in self.inputs:
             self.inputs[input] = False
+    
+    def load_existing(self):
+        with open(path.join(self.assets_dir, "volume.json"), 'r+') as file:
+            volumes = json.load(file)
+        return volumes
+
+    def create_file(self):
+        save = {
+            "master": .5,
+            "music": .5,
+            "sounds": .5
+        }
+        file = open(path.join(self.assets_dir, "volume.json"), "w")
+        json.dump(save, file)
+        return save
+    
+    def load_volumes(self):
+        try:
+            save = self.load_existing()
+        except:
+            save = self.create_file()
+        self.volumes = save
         
 game = Game()
 while game.running:

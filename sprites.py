@@ -178,6 +178,7 @@ class Player(pygame.sprite.Sprite):
                 else:
                     self.sword.update(self.posx+32, self.posy+8, self)
             if self.health <= 0:
+                self.health = 0
                 if self.velx <= 0:
                     self.anim_list = self.l_kill
                 elif self.velx > 0:

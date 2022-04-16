@@ -131,6 +131,7 @@ class World(State):
     def __init__(self, game):
         State.__init__(self, game)
         self.game = game
+        self.volumes = self.load_volume()
         self.all_sprites = CameraGroup(self)
         self.dependants = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
@@ -149,7 +150,21 @@ class World(State):
         self.leave_state = False
         self.sparks = []
         self.offset = [0, 0]
+        self.game.sword_sounds["sh_parry"].set_volume(self.volumes["sounds"])
+        self.game.sword_sounds["sw_parry"].set_volume(self.volumes["sounds"])
+        self.game.sword_sounds["s_hit"].set_volume(self.volumes["sounds"])
+        self.game.sword_sounds["n_hit"].set_volume(self.volumes["sounds"])
+        pygame.mixer.music.load(path.join(self.game.aud_dir, 'Alexander-Ehlers-Twists.ogg'))
+        pygame.mixer.music.play(loops=-1)
+        if round(self.volumes["music"]-.2) == 0:
+            self.volumes["music"] = .3
+        pygame.mixer.music.set_volume(self.volumes["music"]-.2)
         #print(self.all_sprites.sprites())
+    
+    def load_volume(self):
+        with open(path.join(self.game.assets_dir, "volume.json"), 'r+') as file:
+            volumes = json.load(file)
+        return volumes
 
     def collide_hitbox(self, left, right):
         return left.hitbox.colliderect(right.hitbox)
@@ -233,6 +248,10 @@ class World(State):
         sword_hits = pygame.sprite.groupcollide(self.mobs, self.attacks, False, False, self.collide_rect_circle_hitbox)
         for hit in sword_hits:
             if not hit.invincible:
+                if type(hit) == Ninja:
+                    self.game.sword_sounds["n_hit"].play()
+                elif type(hit) == Samurai:
+                    self.game.sword_sounds["s_hit"].play()
                 #self.mobs.empty()
                 hit.health -= 1
                 hit.iframe()
@@ -243,29 +262,44 @@ class World(State):
         mob_melee_hits = pygame.sprite.spritecollide(self.player, self.mob_melee, True, self.collide_hitbox)
         if not self.player.invincible:
             for hit in mob_melee_hits:
+                self.game.sword_sounds["n_hit"].play()
                 self.player.health -= 2
                 self.player.iframe(False)
             for hit in mob_hits:
+                self.game.sword_sounds["n_hit"].play()
                 self.player.health -= 1
                 self.player.iframe(False)
         player_leave = self.collide_hitbox(self.player, self.gate)
         if player_leave and len(self.mobs) <= 0:
             if abs(self.player.hitbox.centerx - self.gate.hitbox.centerx) <= 10:
+                self.prev_state.volumes = self.prev_state.load_volume()
                 self.prev_state.player_win = True
                 self.prev_state.player_dead = False
+                self.prev_state.playing_song = False
+                pygame.mixer.music.stop()
                 self.exit_state()
         if len(self.player.groups()) == 1:
             now = pygame.time.get_ticks()
             if now-self.player.end_game>1000:
+                self.prev_state.volumes = self.prev_state.load_volume()
                 self.prev_state.player_dead = True
                 self.prev_state.player_win = False
+                self.prev_state.playing_song = False
+                pygame.mixer.music.stop()
                 self.exit_state()
         elif self.leave_state:
+            self.prev_state.volumes = self.prev_state.load_volume()
+            self.prev_state.player_dead = False
+            self.prev_state.player_win = False
+            self.prev_state.playing_song = False
+            self.game.playing_music = False
+            pygame.mixer.music.stop()
             self.exit_state()
         #print(bool(self.mobs))
         mx, my = pygame.mouse.get_pos()
         parry_hits = pygame.sprite.groupcollide(self.attacks, self.mob_attacks, False, True, pygame.sprite.collide_circle)
         for hit in parry_hits:
+            self.game.sword_sounds["sh_parry"].play()
             self.player.iframe(True)
             if self.player.facing_left:
                 self.offset[0] = hit.hitbox.x - self.all_sprites.offsetx
@@ -277,6 +311,7 @@ class World(State):
                 self.sparks.append(Spark([self.offset[0], self.offset[1]], math.radians(random.randint(0, 360)), random.randint(3, 6), (235, 130, 0), 2))
         mob_melee_parry = pygame.sprite.groupcollide(self.attacks, self.mob_melee, True, True, pygame.sprite.collide_circle)
         for hit in mob_melee_parry:
+            self.game.sword_sounds["sw_parry"].play()
             self.player.iframe(True)
             if self.player.facing_left:
                 self.offset[0] = hit.hitbox.x - self.all_sprites.offsetx

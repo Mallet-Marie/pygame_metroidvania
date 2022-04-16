@@ -4,12 +4,14 @@ from states.world import World
 from states.options import Options
 from settings import *
 from os import path
+import json
 
 class MainMenu(State):
     def __init__(self, game):
         State.__init__(self, game)
         self.game = game
         self.index = 0
+        self.volumes = self.load_volume()
         self.buttons = pygame.sprite.Group()
         self.dead_buttons = pygame.sprite.Group()
         self.replay_buttons = pygame.sprite.Group()
@@ -33,33 +35,52 @@ class MainMenu(State):
         self.replay_buttons.add(self.retmenu_button)
         self.replay_buttons.add(self.quitdesk_button)
         self.mouse = Mouse(game)
+        self.playing_song = False
         self.prev_state = self.game.title_screen
         self.hovered = None
+    
+    def load_volume(self):
+        with open(path.join(self.game.assets_dir, "volume.json"), 'r+') as file:
+            volumes = json.load(file)
+        return volumes
     
     def update(self, dt, inputs):
         self.mouse.update()
         if not self.player_dead and not self.player_win:
+            if not self.playing_song and not self.game.playing_music:
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Boss Battle #2 V2.wav'))
+                pygame.mixer.music.play(loops=-1)
+                pygame.mixer.music.set_volume(self.volumes["music"])
+                self.playing_song = True
             hovers = pygame.sprite.spritecollide(self.mouse, self.buttons, False)
             self.hovered = None
             for hover in hovers:
                 self.hovered = hover
                 if inputs["l_click"]:
                     if hover.key == "start":
+                        pygame.mixer.music.stop()
                         new_state = World(self.game)
                         new_state.enter_state()
                     elif hover.key == "options":
                         new_state = Options(self.game)
                         new_state.enter_state()
                     elif hover.key == "quit":
+                        pygame.mixer.music.stop()
                         self.game.running = False
                         self.game.playing = False
         
         elif self.player_dead and not self.player_win:
+            if not self.playing_song:
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Death-of-a-Ninja-_Game-Over_.ogg'))
+                pygame.mixer.music.play()
+                pygame.mixer.music.set_volume(self.volumes["music"])
+                self.playing_song = True
             hovers = pygame.sprite.spritecollide(self.mouse, self.dead_buttons, False)
             self.hovered = None
             for hover in hovers:
                 self.hovered = hover
                 if inputs["l_click"]:
+                    pygame.mixer.music.stop()
                     if hover.key == "retry":
                         new_state = World(self.game)
                         new_state.enter_state()
@@ -71,11 +92,17 @@ class MainMenu(State):
                         self.game.playing = False
         
         elif not self.player_dead and self.player_win:
+            if not self.playing_song:
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'endingv2.wav'))
+                pygame.mixer.music.play()
+                pygame.mixer.music.set_volume(self.volumes["music"])
+                self.playing_song = True
             hovers = pygame.sprite.spritecollide(self.mouse, self.replay_buttons, False)
             self.hovered = None
             for hover in hovers:
                 self.hovered = hover
                 if inputs["l_click"]:
+                    pygame.mixer.music.stop()
                     if hover.key == "replay":
                         new_state = World(self.game)
                         new_state.enter_state()
@@ -120,7 +147,7 @@ class Mouse(pygame.sprite.Sprite):
     def __init__(self, game):
         self.game = game
         pygame.mouse.set_visible(False)
-        self.image = pygame.image.load(path.join(self.game.assets_dir, "kunai.png")).convert()
+        self.image = pygame.image.load(path.join(self.game.assets_dir, "kunai1.png")).convert()
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         pygame.mouse.set_pos(WIDTH/2, HEIGHT/2)

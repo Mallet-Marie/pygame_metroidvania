@@ -69,4 +69,4 @@ for presentation:
 	look at camera
 	add music/sfx
 build:
-	python -m nuitka --standalone --onefile --windows-disable-console --windows-icon-from-ico=retribution.png game.py
+	python -m nuitka --standalone --windows-disable-console --windows-icon-from-ico="retribution.png" retribution.py
