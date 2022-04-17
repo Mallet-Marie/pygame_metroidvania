@@ -530,8 +530,8 @@ class Game():
         self.aud_dir = path.join(self.assets_dir, "audio")
         self.load_volumes()
 
-        self.sword_sounds["sh_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash.2.ogg'))
-        self.sword_sounds["sw_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash.1.ogg'))
+        self.sword_sounds["sh_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash_2.wav'))
+        self.sword_sounds["sw_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash_1.wav'))
         self.sword_sounds["n_hit"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword-1a.wav'))
         self.sword_sounds["s_hit"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword-arm-2b.wav'))
         self.load_samurai_anims()

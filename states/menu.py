@@ -71,7 +71,7 @@ class MainMenu(State):
         
         elif self.player_dead and not self.player_win:
             if not self.playing_song:
-                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Death-of-a-Ninja-_Game-Over_.ogg'))
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Death-of-a-Ninja-_Game-Over_.wav'))
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True
