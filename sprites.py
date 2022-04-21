@@ -165,10 +165,10 @@ class Player(pygame.sprite.Sprite):
             self.dx = self.inputs["right"] - self.inputs["left"]
             self.velx = dt * self.dx * 3  
             
-            if self.inputs["space"] and self.can_attack:
+            if self.inputs["attack"] and self.can_attack:
                 self.can_attack = False
                 self.attack()
-            if not self.inputs["space"]:
+            if not self.inputs["attack"]:
                 self.can_attack = True
             if self.sword.alive():
                 if self.facing_left:
@@ -200,10 +200,10 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x = self.posx-52
             self.horizontal_movement(tiles)
 
-            if self.inputs["up"] and not self.jumping and self.jumps > 0:
+            if self.inputs["jump"] and not self.jumping and self.jumps > 0:
                 self.jump()
                 self.jumps -= 1
-            elif not self.inputs["up"] and self.jumping:
+            elif not self.inputs["jump"] and self.jumping:
                 self.vely *= .25
                 self.jumping = False
 

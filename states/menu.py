@@ -24,6 +24,9 @@ class MainMenu(State):
         self.replay_button = Button(self.game, WIDTH/5, 320, "replay.png", "replay")
         self.dead_image = pygame.image.load(path.join(self.game.assets_dir, "death_screen.png")).convert()
         self.win_image = pygame.image.load(path.join(self.game.assets_dir, "win_screen.png")).convert()
+        self.cursor_image = pygame.image.load(path.join(self.game.assets_dir, "cursor.png")).convert_alpha()
+        self.cursor_rect = self.cursor_image.get_rect()
+        self.cursor_rect.center = WIDTH/5, 230
         self.dead_rect = self.dead_image.get_rect()
         self.buttons.add(self.start_button)
         self.buttons.add(self.options_button)
@@ -36,6 +39,8 @@ class MainMenu(State):
         self.replay_buttons.add(self.quitdesk_button)
         self.mouse = Mouse(game)
         self.playing_song = False
+        self.index = 0
+        self.menu_options = ["option1", "option2", "option3"]
         self.prev_state = self.game.title_screen
         self.hovered = None
     
@@ -44,14 +49,46 @@ class MainMenu(State):
             volumes = json.load(file)
         return volumes
     
+    def move_cursor(self, inputs):
+        if inputs["right"]:
+            self.index = (self.index+1) % len(self.menu_options)
+        elif inputs["left"]:
+            self.index = (self.index-1) % len(self.menu_options)
+
+        if not self.player_dead and not self.player_win:
+            self.cursor_rect.centery = 230
+        else:
+            self.cursor_rect.centery = 280
+
+        if self.index == 0:
+            self.cursor_rect.centerx = WIDTH/5
+        elif self.index == 1:
+            self.cursor_rect.centerx = WIDTH/2
+        elif self.index == 2:
+            self.cursor_rect.centerx = WIDTH-WIDTH/5
+
     def update(self, dt, inputs):
         self.mouse.update()
+        self.move_cursor(inputs)
         if not self.player_dead and not self.player_win:
             if not self.playing_song and not self.game.playing_music:
                 pygame.mixer.music.load(path.join(self.game.aud_dir, 'Boss Battle #2 V2.wav'))
                 pygame.mixer.music.play(loops=-1)
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True
+            if inputs["enter"]:
+                if self.index == 0:
+                    pygame.mixer.music.stop()
+                    new_state = World(self.game)
+                    new_state.enter_state()
+                elif self.index == 1:
+                    new_state = Options(self.game)
+                    new_state.enter_state()
+                elif self.index == 2:
+                    pygame.mixer.music.stop()
+                    self.game.running = False
+                    self.game.playing = False
+
             hovers = pygame.sprite.spritecollide(self.mouse, self.buttons, False)
             self.hovered = None
             for hover in hovers:
@@ -75,6 +112,20 @@ class MainMenu(State):
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True
+
+            if inputs["enter"]:
+                if self.index == 0:
+                    pygame.mixer.music.stop()
+                    new_state = World(self.game)
+                    new_state.enter_state()
+                elif self.index == 1:
+                    self.player_win = False
+                    self.player_dead = False
+                elif self.index == 2:
+                    pygame.mixer.music.stop()
+                    self.game.running = False
+                    self.game.playing = False
+
             hovers = pygame.sprite.spritecollide(self.mouse, self.dead_buttons, False)
             self.hovered = None
             for hover in hovers:
@@ -97,6 +148,20 @@ class MainMenu(State):
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True
+
+            if inputs["enter"]:
+                if self.index == 0:
+                    pygame.mixer.music.stop()
+                    new_state = World(self.game)
+                    new_state.enter_state()
+                elif self.index == 1:
+                    self.player_win = False
+                    self.player_dead = False
+                elif self.index == 2:
+                    pygame.mixer.music.stop()
+                    self.game.running = False
+                    self.game.playing = False
+
             hovers = pygame.sprite.spritecollide(self.mouse, self.replay_buttons, False)
             self.hovered = None
             for hover in hovers:
@@ -115,7 +180,6 @@ class MainMenu(State):
 
         self.game.reset_keys()
 
-
     def draw(self, display):
         if not self.player_dead and not self.player_win:
             self.prev_state.draw(display)
@@ -126,6 +190,8 @@ class MainMenu(State):
         elif self.player_win and not self.player_dead:
             display.blit(self.win_image, self.dead_rect)
             self.replay_buttons.draw(display)
+        
+        display.blit(self.cursor_image, self.cursor_rect)
 
         if self.hovered:
             display.blit(self.hovered.fade, self.hovered.rect)

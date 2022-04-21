@@ -156,7 +156,7 @@ class World(State):
         self.game.sword_sounds["n_hit"].set_volume(self.volumes["sounds"])
         pygame.mixer.music.load(path.join(self.game.aud_dir, 'Alexander-Ehlers-Twists.wav'))
         pygame.mixer.music.play(loops=-1)
-        if round(self.volumes["music"]-.2) == 0:
+        if round(self.volumes["music"]-.2, 1) == -0.1 or round(self.volumes["music"]-.2, 1) == 0:
             self.volumes["music"] = .3
         pygame.mixer.music.set_volume(self.volumes["music"]-.2)
         #print(self.all_sprites.sprites())
@@ -240,6 +240,7 @@ class World(State):
     def update(self, dt, inputs):
         self.dt = dt
         if inputs["enter"]:
+            self.game.reset_keys()
             new_state = PauseMenu(self.game, self)
             new_state.enter_state()
         self.dependants.update(self.dt, inputs, self.collision_tiles)

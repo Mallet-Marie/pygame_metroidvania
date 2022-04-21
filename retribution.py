@@ -3,10 +3,13 @@ import json
 from pygame.constants import *
 from os import path
 from states.title import Title
+from states.options import Options
 from settings import *
+import controls
 
 class Game():
     def __init__(self):
+        pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
         pygame.mixer.init()
         self.joysticks = []
@@ -19,7 +22,7 @@ class Game():
         self.canvas = pygame.Surface((WIDTH, HEIGHT))
         self.screen = pygame.display.set_mode((self.SCREEN_W, self.SCREEN_H), pygame.NOFRAME)
         self.running, self.playing = True, True
-        self.inputs = {"left": False, "right": False, "up": False, "down": False, "space": False, "enter": False, "back": False, "l_click": False}
+        self.inputs = {"left": False, "right": False, "up": False, "down": False, "attack": False, "enter": False, "back": False, "jump": False, "l_click": False}
         self.state_stack = []
         self.samurai_anims = {"l_walk": [], "r_walk": [], "l_attack": [], "r_attack": [], "l_idle": [], "r_idle": [], "l_hit": [], "r_hit": [], "l_kill": [], "r_kill": []}
         self.player_anims = {"l_walk": [], "r_walk": [], "l_attack": [], "r_attack": [], "l_idle": [], "r_idle": [], "l_hit": [], "r_hit": [], "l_kill": [], "r_kill": []}
@@ -33,6 +36,14 @@ class Game():
         pygame.mixer.music.play(loops=-1)
         pygame.mixer.music.set_volume(self.volumes["music"])
         self.playing_music = True
+        new_save = {    
+            "keyboard": {"left": pygame.K_a, "right": pygame.K_d, "up": pygame.K_w, "down": pygame.K_s, 
+                "attack": pygame.K_j, "enter": pygame.K_RETURN, "back": pygame.K_BACKSPACE, "jump": pygame.K_k},
+            "gamepad": {"jump": 0, "enter": 1, "attack": 2, "back": 3},
+            "type": 0
+            }
+        save = controls.load("controls.json", new_save)
+        self.control_handler = controls.Controls_Handler(save, "keyboard", self)
 
     def game_loop(self):
         while self.playing:
@@ -50,32 +61,47 @@ class Game():
                 if event.key == K_ESCAPE:
                     self.running = False
                     self.playing = False
-                if event.key == K_d:
-                    self.inputs["right"] = True
-                if event.key == K_a:
-                    self.inputs["left"] = True
-                if event.key == K_w:
-                    self.inputs["up"] = True
-                if event.key == K_s:
-                    self.inputs["down"] = True
-                if event.key == K_SPACE:
-                    self.inputs["space"] = True
-                if event.key == K_RETURN:
+                if event.key == self.control_handler.k_controls['left']:
+                    self.inputs['left'] = True
+                if event.key == self.control_handler.k_controls['right']:
+                    self.inputs['right'] = True
+                if event.key == self.control_handler.k_controls['up']:
+                    self.inputs['up'] = True
+                if event.key == self.control_handler.k_controls['down']:
+                    self.inputs['down'] = True
+                if event.key == self.control_handler.k_controls["attack"]:
+                    self.inputs["attack"] = True
+                if event.key == self.control_handler.k_controls["enter"]:
                     self.inputs["enter"] = True
-                if event.key == K_BACKSPACE:
+                if event.key == self.control_handler.k_controls["back"]:
                     self.inputs["back"] = True
+                if event.key == self.control_handler.k_controls["jump"]:
+                    self.inputs["jump"] = True
+            if event.type == pygame.KEYUP:
+                if event.key == self.control_handler.k_controls['left']:
+                    self.inputs['left'] = False
+                if event.key == self.control_handler.k_controls['right']:
+                    self.inputs['right'] = False
+                if event.key == self.control_handler.k_controls['up']:
+                    self.inputs['up'] = False
+                if event.key == self.control_handler.k_controls['down']:
+                    self.inputs['down'] = False
+                if event.key == self.control_handler.k_controls["attack"]:
+                    self.inputs["attack"] = False
+                if event.key == self.control_handler.k_controls["enter"]:
+                    self.inputs["enter"] = False
+                if event.key == self.control_handler.k_controls["back"]:
+                    self.inputs["back"] = False
+                if event.key == self.control_handler.k_controls["jump"]:
+                    self.inputs["jump"] = False
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.inputs["l_click"] = True
-            if event.type == pygame.JOYBUTTONDOWN:
-                if event.button == 0:
-                    self.inputs["up"] = True
+            if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-                    self.inputs["space"] = True
-                if event.button == 2:
-                    self.inputs["enter"] = True
-                if event.button == 3:
-                    self.inputs["back"] = True
+                    self.inputs["l_click"] = False
+
             if event.type == pygame.JOYHATMOTION:
                 if event.value[0] == 1:
                     self.inputs["right"] = True
@@ -86,40 +112,58 @@ class Game():
                 if event.value[0] == 0:
                     self.inputs["right"] = False
                     self.inputs["left"] = False
-            if event.type == pygame.KEYUP:
-                if event.key == K_d:
-                    self.inputs["right"] = False
-                if event.key == K_a:
-                    self.inputs["left"] = False
-                if event.key == K_w:
-                    self.inputs["up"] = False
-                if event.key == K_s:
+                if event.value[1] == 1:
+                    self.inputs["up"] = True
                     self.inputs["down"] = False
-                if event.key == K_SPACE:
-                    self.inputs["space"] = False
-                if event.key == K_RETURN:
-                    self.inputs["enter"] = False
-                if event.key == K_BACKSPACE:
-                    self.inputs["back"] = False
-            if event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    self.inputs["l_click"] = False
-            if event.type == pygame.JOYBUTTONUP:
-                if event.button == 0:
+                if event.value[1] == -1:
+                    self.inputs["down"] = True
                     self.inputs["up"] = False
-                if event.button == 1:
-                    self.inputs["space"] = False
-                if event.button == 2:
+                if event.value[1] == 0:
+                    self.inputs["up"] = False
+                    self.inputs["down"] = False
+
+            if event.type == pygame.JOYBUTTONDOWN:
+                if event.button == self.control_handler.g_controls["attack"]:
+                    self.inputs["attack"] = True
+                if event.button == self.control_handler.g_controls["enter"]:
+                    self.inputs["enter"] = True
+                if event.button == self.control_handler.g_controls["back"]:
+                    self.inputs["back"] = True
+                if event.button == self.control_handler.g_controls["jump"]:
+                    self.inputs["jump"] = True
+                if event.button == 11:
+                    self.inputs["up"] = True
+                if event.button == 12:
+                    self.inputs["down"] = True
+                if event.button == 13:
+                    self.inputs["left"] = True
+                if event.button == 14:
+                    self.inputs["right"] = True
+            if event.type == pygame.JOYBUTTONUP:
+                if event.button == self.control_handler.g_controls["attack"]:
+                    self.inputs["attack"] = False
+                if event.button == self.control_handler.g_controls["enter"]:
                     self.inputs["enter"] = False
-                if event.button == 3:
+                if event.button == self.control_handler.g_controls["back"]:
                     self.inputs["back"] = False
+                if event.button == self.control_handler.g_controls["jump"]:
+                    self.inputs["jump"] = False
+                if event.button == 11:
+                    self.inputs["up"] = False
+                if event.button == 12:
+                    self.inputs["down"] = False
+                if event.button == 13:
+                    self.inputs["left"] = False
+                if event.button == 14:
+                    self.inputs["right"] = False
     
     def update(self):
+        #self.control_handler.update(self.inputs)
         self.state_stack[-1].update(self.dt, self.inputs)
 
     def draw(self):
         self.state_stack[-1].draw(self.canvas)
-        #pygame.draw.polygon(self.canvas, WHITE, [[240, 360], [120, 50], [60, 30]])
+        #self.control_handler.draw(self.canvas)
         self.screen.blit(pygame.transform.scale(self.canvas, (self.SCREEN_W, self.SCREEN_H)), (0, 0))
         pygame.display.flip()
     
@@ -528,7 +572,12 @@ class Game():
         self.sprite_dir = path.join(self.assets_dir, "sprites")
         self.font_dir = path.join(self.assets_dir, "font")
         self.aud_dir = path.join(self.assets_dir, "audio")
-        self.load_volumes()
+        v_save = {
+            "master": .5,
+            "music": .5,
+            "sounds": .5
+        }
+        self.volumes = controls.load("volume.json", v_save)
 
         self.sword_sounds["sh_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash_2.wav'))
         self.sword_sounds["sw_parry"] = pygame.mixer.Sound(path.join(self.aud_dir, 'sword_clash_1.wav'))
@@ -555,28 +604,6 @@ class Game():
     def reset_keys(self):
         for input in self.inputs:
             self.inputs[input] = False
-    
-    def load_existing(self):
-        with open(path.join(self.assets_dir, "volume.json"), 'r+') as file:
-            volumes = json.load(file)
-        return volumes
-
-    def create_file(self):
-        save = {
-            "master": .5,
-            "music": .5,
-            "sounds": .5
-        }
-        file = open(path.join(self.assets_dir, "volume.json"), "w")
-        json.dump(save, file)
-        return save
-    
-    def load_volumes(self):
-        try:
-            save = self.load_existing()
-        except:
-            save = self.create_file()
-        self.volumes = save
         
 game = Game()
 while game.running:

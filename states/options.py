@@ -1,15 +1,27 @@
 import pygame 
+from pygame.constants import *
 from states.state import State
 from settings import *
 from os import path
-import json
+import controls
 
 class Options(State):
     def __init__(self, game):
         State.__init__(self, game)
         self.game = game
-        self.volumes = None
-        self.load()
+        c_save = {    
+            "keyboard": {"left": pygame.K_a, "right": pygame.K_d, "up": pygame.K_w, "down": pygame.K_s, 
+                "attack": pygame.K_j, "enter": pygame.K_RETURN, "back": pygame.K_BACKSPACE, "jump": pygame.K_k},
+            "gamepad": {"jump": 0, "enter": 1, "attack": 2, "back": 3},
+            "type": 0
+            }
+        v_save = {
+            "master": .5,
+            "music": .5,
+            "sounds": .5
+        }
+        self.c_save = controls.load("controls.json", c_save)
+        self.volumes = controls.load("volume.json", v_save)
         self.image = pygame.image.load(path.join(self.game.assets_dir, "Retribution_Title.png")).convert_alpha()
         self.rect = self.image.get_rect()
         self.fade = pygame.Surface((self.rect.width, self.rect.height))
@@ -20,68 +32,157 @@ class Options(State):
         self.music = Volume(WIDTH/5, 192, "Music:", self.game, self.volumes["music"])
         self.sounds = Volume(WIDTH/5, 256, "Sounds:", self.game, self.volumes["sounds"])
         self.buttons = [self.master, self.music, self.sounds]
+        self.edit_audio = False
+        self.edit_gamepad = False
+        self.edit_keyboard = False
+        self.edit_controls = False
+        self.cursor_image = pygame.transform.rotate(pygame.image.load(path.join(self.game.assets_dir, "cursor.png")).convert_alpha(), 90)
+        self.cursor_rect = self.cursor_image.get_rect()
+        self.cursor_rect.center = WIDTH/2-96, 140
+        self.m_buttons = pygame.sprite.Group()
+        self.audio_button = Button(self.game, WIDTH/2, 140, "audio.png","audio")
+        self.gamepad_button = Button(self.game, WIDTH/2, 220, "gamepad1.png","gamepad")
+        self.keyboard_button = Button(self.game, WIDTH/2, 300, "keyboard.png","keyboard")
+        self.m_buttons.add(self.audio_button)
+        self.m_buttons.add(self.gamepad_button)
+        self.m_buttons.add(self.keyboard_button)
+        self.hovered = None
+        self.index = 0
+        self.control_handler = controls.Controls_Handler(self.c_save, "keyboard", self.game)
     
-    def load_existing(self):
-        with open(path.join(self.game.assets_dir, "volume.json"), 'r+') as file:
-            volumes = json.load(file)
-        return volumes
+    def move_cursor(self, inputs):
+        if inputs["down"]:
+            self.index = (self.index-1) % 3
+        elif inputs["up"]:
+            self.index = (self.index+1) % 3
 
-    def create_file(self):
-        save = {
-            "master": .5,
-            "music": .5,
-            "sounds": .5
-        }
-        file = open(path.join(self.game.assets_dir, "volume.json"), "w")
-        json.dump(save, file)
-        return save
-    
-    def write_file(self):
-        save = self.volumes
-        file = open(path.join(self.game.assets_dir, "volume.json"), "w")
-        json.dump(save, file)
-    
-    def load(self):
-        try:
-            save = self.load_existing()
-        except:
-            save = self.create_file()
-        self.volumes = save
+        if self.edit_audio:
+            if self.index == 0:
+                self.cursor_rect.centery = 128
+            elif self.index == 1:
+                self.cursor_rect.centery = 192
+            elif self.index == 2:
+                self.cursor_rect.centery = 256
+        else:
+            if self.index == 0:
+                self.cursor_rect.centery = 140
+            elif self.index == 1:
+                self.cursor_rect.centery = 220
+            elif self.index == 2:
+                self.cursor_rect.centery = 300
 
     def update(self, dt, inputs):
-        for button in self.buttons:
-            hover = pygame.sprite.collide_rect(self.mouse, button.plus)
-            if hover:
-                if inputs["l_click"]:
-                    if round(button.volume, 1) < 1:
-                        button.volume += .1
-        for button in self.buttons:
-            hover = pygame.sprite.collide_rect(self.mouse, button.minus)
-            if hover:
-                if inputs["l_click"]:
-                    if round(button.volume, 1) > 0:
-                        button.volume -= .1
-
-        self.volumes["master"] = round(self.master.volume, 1)
-        self.volumes["music"] = round(self.music.volume, 1)
-        self.volumes["sounds"] = round(self.sounds.volume, 1)
         self.mouse.update()
-        if inputs["back"]:
-            if self.volumes["master"] < self.volumes["music"] or self.volumes["master"] < self.volumes["sounds"]:
-                self.volumes["music"] = self.volumes["master"]
-                self.volumes["sounds"] = self.volumes["master"]
-            self.write_file()
-            self.prev_state.volumes = self.prev_state.load_volume()
-            self.exit_state()
+        self.move_cursor(inputs)
+        if not self.edit_audio and not self.edit_gamepad and not self.edit_keyboard:
+            self.move_cursor(inputs)
+            if inputs["back"]:
+                self.exit_state()
+
+            if inputs["enter"]:
+                self.game.reset_keys()
+                if self.index == 0:
+                    self.edit_audio = True
+                elif self.index == 1:
+                    self.edit_gamepad = True
+                elif self.index == 2:
+                    self.edit_keyboard = True
+
+            hovers = pygame.sprite.spritecollide(self.mouse, self.m_buttons, False)
+            self.hovered = None
+            for hover in hovers:
+                self.hovered = hover
+                if inputs["l_click"]:
+                    if hover.key == "audio":
+                        self.edit_audio = True
+                    elif hover.key == "gamepad":
+                        self.edit_gamepad = True
+                    elif hover.key == "keyboard":
+                        self.edit_keyboard = True
+
+        if self.edit_audio:
+            self.cursor_rect.centerx = 40
+            self.move_cursor(inputs)
+            for button in self.buttons:
+                hover = pygame.sprite.collide_rect(self.mouse, button.plus)
+                if hover:
+                    if inputs["l_click"]:
+                        if round(button.volume, 1) < 1:
+                            button.volume += .1
+            for button in self.buttons:
+                hover = pygame.sprite.collide_rect(self.mouse, button.minus)
+                if hover:
+                    if inputs["l_click"]:
+                        if round(button.volume, 1) > 0:
+                            button.volume -= .1
+
+            if self.index == 0:
+                if inputs["left"]:
+                    if round(self.master.volume, 1) > 0:
+                        self.master.volume -= .1
+                elif inputs["right"]:
+                    if round(self.master.volume, 1) < 1:
+                        self.master.volume += .1
+
+            elif self.index == 1:
+                if inputs["left"]:
+                    if round(self.music.volume, 1) > 0:
+                        self.music.volume -= .1
+                elif inputs["right"]:
+                    if round(self.music.volume, 1) < 1:
+                        self.music.volume += .1
+
+            elif self.index == 2:
+                if inputs["left"]:
+                    if round(self.sounds.volume, 1) > 0:
+                        self.sounds.volume -= .1
+                elif inputs["right"]:
+                    if round(self.sounds.volume, 1) < 1:
+                        self.sounds.volume += .1
+
+            self.volumes["master"] = round(self.master.volume, 1)
+            self.volumes["music"] = round(self.music.volume, 1)
+            self.volumes["sounds"] = round(self.sounds.volume, 1)
+            if inputs["back"]:
+                if self.volumes["master"] < self.volumes["music"] or self.volumes["master"] < self.volumes["sounds"]:
+                    self.volumes["music"] = self.volumes["master"]
+                    self.volumes["sounds"] = self.volumes["master"]
+                controls.write_file("volume.json", self.volumes)
+                #self.prev_state.volumes = self.prev_state.load_volume()
+                self.exit_state()
+        elif self.edit_gamepad and not self.edit_controls:
+            self.control_handler = controls.Controls_Handler(self.c_save, "gamepad", self.game)
+            self.edit_controls = True
+        elif self.edit_keyboard and not self.edit_controls:
+            self.control_handler = controls.Controls_Handler(self.c_save, "keyboard", self.game)
+            self.edit_controls = True
+        
+        if self.edit_controls:
+            self.control_handler.update(inputs)
+            if inputs["back"]:
+                self.game.control_handler.k_controls = self.control_handler.k_controls
+                self.game.control_handler.g_controls = self.control_handler.g_controls
+                self.exit_state()
         self.game.reset_keys()
     
     def draw(self, display):
         display.blit(self.image, self.rect)
         display.blit(self.fade, self.rect)
-        self.game.draw_text(display, "Audio", 40, WHITE, WIDTH/2, 64)
-        self.master.draw(display, self.volumes["master"])
-        self.music.draw(display, self.volumes["music"])
-        self.sounds.draw(display, self.volumes["sounds"])
+        if not self.edit_audio and not self.edit_gamepad and not self.edit_keyboard:
+            self.game.draw_text(display, "Options", 40, WHITE, WIDTH/2, 64)
+            self.m_buttons.draw(display)
+            display.blit(self.cursor_image, self.cursor_rect)
+            if self.hovered:
+                display.blit(self.hovered.fade, self.hovered.rect)
+        elif self.edit_audio:
+            self.game.draw_text(display, "Audio", 40, WHITE, WIDTH/2, 64)
+            self.master.draw(display, self.volumes["master"])
+            self.music.draw(display, self.volumes["music"])
+            self.sounds.draw(display, self.volumes["sounds"])
+            display.blit(self.cursor_image, self.cursor_rect)
+        elif self.edit_gamepad or self.edit_keyboard:
+            self.control_handler.draw(display)
+
         display.blit(self.mouse.image, self.mouse.rect)
 
 class Volume():
@@ -144,3 +245,15 @@ class Mouse(pygame.sprite.Sprite):
             self.rect.centery = HEIGHT
         elif self.rect.centery <= 0:
             self.rect.centery = 0
+
+class Button(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, img, key):
+        pygame.sprite.Sprite.__init__(self)
+        self.game = game
+        self.key = key
+        self.image = pygame.image.load(path.join(self.game.assets_dir, img)).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.fade = pygame.Surface((self.rect.width, self.rect.height))
+        self.fade.set_alpha(100)
+        self.fade.fill(BLACK)
+        self.rect.center = (x, y)
