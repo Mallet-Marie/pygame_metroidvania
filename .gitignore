@@ -2,3 +2,6 @@
 __pycache__/
 states/__pycache__/
 *.pyc
+/build/
+/.idea/
+/.vscode/
