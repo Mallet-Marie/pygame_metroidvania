@@ -154,7 +154,7 @@ class World(State):
         self.game.sword_sounds["sw_parry"].set_volume(self.volumes["sounds"])
         self.game.sword_sounds["s_hit"].set_volume(self.volumes["sounds"])
         self.game.sword_sounds["n_hit"].set_volume(self.volumes["sounds"])
-        pygame.mixer.music.load(path.join(self.game.aud_dir, 'Alexander-Ehlers-Twists.wav'))
+        pygame.mixer.music.load(path.join(self.game.aud_dir, 'Alexander-Ehlers-Twists.ogg'))
         pygame.mixer.music.play(loops=-1)
         if round(self.volumes["music"]-.2, 1) == -0.1 or round(self.volumes["music"]-.2, 1) == 0:
             self.volumes["music"] = .3

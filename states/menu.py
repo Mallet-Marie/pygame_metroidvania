@@ -72,7 +72,7 @@ class MainMenu(State):
         self.move_cursor(inputs)
         if not self.player_dead and not self.player_win:
             if not self.playing_song and not self.game.playing_music:
-                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Boss Battle #2 V2.wav'))
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Boss Battle #2 V2.ogg'))
                 pygame.mixer.music.play(loops=-1)
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True
@@ -108,7 +108,7 @@ class MainMenu(State):
         
         elif self.player_dead and not self.player_win:
             if not self.playing_song:
-                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Death-of-a-Ninja-_Game-Over_.wav'))
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'Death-of-a-Ninja-_Game-Over_.ogg'))
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True
@@ -144,7 +144,7 @@ class MainMenu(State):
         
         elif not self.player_dead and self.player_win:
             if not self.playing_song:
-                pygame.mixer.music.load(path.join(self.game.aud_dir, 'endingv2.wav'))
+                pygame.mixer.music.load(path.join(self.game.aud_dir, 'endingv2.ogg'))
                 pygame.mixer.music.play()
                 pygame.mixer.music.set_volume(self.volumes["music"])
                 self.playing_song = True

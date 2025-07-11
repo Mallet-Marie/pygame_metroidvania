@@ -33,7 +33,7 @@ class Game():
         self.load_assets()
         self.load_states()
         self.clock = pygame.time.Clock()
-        pygame.mixer.music.load(path.join(self.aud_dir, 'Boss Battle #2 V2.wav'))
+        pygame.mixer.music.load(path.join(self.aud_dir, 'Boss Battle #2 V2.ogg'))
         pygame.mixer.music.play(loops=-1)
         pygame.mixer.music.set_volume(self.volumes["music"])
         self.playing_music = True
@@ -610,7 +610,7 @@ class Game():
 game = Game()
 async def main():
     while game.running:
-        await asyncio.sleep(0)
         await game.game_loop()
+        await asyncio.sleep(0)
 asyncio.run(main())
 #pygame.quit()
