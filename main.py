@@ -60,9 +60,6 @@ class Game():
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == K_ESCAPE:
-                    self.running = False
-                    self.playing = False
                 if event.key == self.control_handler.k_controls['left']:
                     self.inputs['left'] = True
                 if event.key == self.control_handler.k_controls['right']:
@@ -610,7 +607,7 @@ class Game():
 game = Game()
 async def main():
     while game.running:
-        await asyncio.sleep(0)
         await game.game_loop()
+        await asyncio.sleep(0)
 asyncio.run(main())
 #pygame.quit()
