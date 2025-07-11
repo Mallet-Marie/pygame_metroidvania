@@ -607,7 +607,7 @@ class Game():
 game = Game()
 async def main():
     while game.running:
-        await asyncio.sleep(0)
         await game.game_loop()
+        await asyncio.sleep(0)
 asyncio.run(main())
 #pygame.quit()
