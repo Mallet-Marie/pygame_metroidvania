@@ -16,11 +16,11 @@ class MainMenu(State):
         self.dead_buttons = pygame.sprite.Group()
         self.replay_buttons = pygame.sprite.Group()
         self.start_button = Button(self.game, WIDTH/5, 280, "start.png","start")
-        self.options_button = Button(self.game, WIDTH/2, 280, "options.png", "options")
-        self.quit_button = Button(self.game, WIDTH - WIDTH/5, 280, "quit.png", "quit")
+        #self.options_button = Button(self.game, WIDTH/2, 280, "options.png", "options")
+        #self.quit_button = Button(self.game, WIDTH - WIDTH/5, 280, "quit.png", "quit")
         self.retry_button = Button(self.game, WIDTH/5, 320, "retry.png", "retry")
         self.retmenu_button = Button(self.game, WIDTH/2, 320, "retmenu.png", "retmenu")
-        self.quitdesk_button = Button(self.game, WIDTH - WIDTH/5, 320, "quitdesk.png", "quitdesk")
+        #self.quitdesk_button = Button(self.game, WIDTH - WIDTH/5, 320, "quitdesk.png", "quitdesk")
         self.replay_button = Button(self.game, WIDTH/5, 320, "replay.png", "replay")
         self.dead_image = pygame.image.load(path.join(self.game.assets_dir, "death_screen.png")).convert()
         self.win_image = pygame.image.load(path.join(self.game.assets_dir, "win_screen.png")).convert()
@@ -29,18 +29,18 @@ class MainMenu(State):
         self.cursor_rect.center = WIDTH/5, 230
         self.dead_rect = self.dead_image.get_rect()
         self.buttons.add(self.start_button)
-        self.buttons.add(self.options_button)
-        self.buttons.add(self.quit_button)
+        #self.buttons.add(self.options_button)
+        #self.buttons.add(self.quit_button)
         self.dead_buttons.add(self.retry_button)
         self.dead_buttons.add(self.retmenu_button)
-        self.dead_buttons.add(self.quitdesk_button)
+        #self.dead_buttons.add(self.quitdesk_button)
         self.replay_buttons.add(self.replay_button)
         self.replay_buttons.add(self.retmenu_button)
-        self.replay_buttons.add(self.quitdesk_button)
+        #self.replay_buttons.add(self.quitdesk_button)
         self.mouse = Mouse(game)
         self.playing_song = False
         self.index = 0
-        self.menu_options = ["option1", "option2", "option3"]
+        self.menu_options = ["option1", "option2"]
         self.prev_state = self.game.title_screen
         self.hovered = None
     
@@ -57,15 +57,17 @@ class MainMenu(State):
 
         if not self.player_dead and not self.player_win:
             self.cursor_rect.centery = 230
+            self.menu_options = ["option1"]
         else:
             self.cursor_rect.centery = 280
+            self.menu_options = ["option1", "option2"]
 
         if self.index == 0:
             self.cursor_rect.centerx = WIDTH/5
         elif self.index == 1:
             self.cursor_rect.centerx = WIDTH/2
-        elif self.index == 2:
-            self.cursor_rect.centerx = WIDTH-WIDTH/5
+        """elif self.index == 2:
+            self.cursor_rect.centerx = WIDTH-WIDTH/5"""
 
     def update(self, dt, inputs):
         self.mouse.update()
@@ -81,13 +83,13 @@ class MainMenu(State):
                     pygame.mixer.music.stop()
                     new_state = World(self.game)
                     new_state.enter_state()
-                elif self.index == 1:
-                    new_state = Options(self.game)
-                    new_state.enter_state()
-                elif self.index == 2:
+                """elif self.index == 1:
                     pygame.mixer.music.stop()
                     self.game.running = False
                     self.game.playing = False
+                elif self.index == 1:
+                    new_state = Options(self.game)
+                    new_state.enter_state()"""
 
             hovers = pygame.sprite.spritecollide(self.mouse, self.buttons, False)
             self.hovered = None
@@ -98,13 +100,16 @@ class MainMenu(State):
                         pygame.mixer.music.stop()
                         new_state = World(self.game)
                         new_state.enter_state()
+                    elif hover.key == "quit":
+                        pygame.mixer.music.stop()
+                        #self.game.running = False
+                        #self.game.playing = False
+                    
+                    """
                     elif hover.key == "options":
                         new_state = Options(self.game)
                         new_state.enter_state()
-                    elif hover.key == "quit":
-                        pygame.mixer.music.stop()
-                        self.game.running = False
-                        self.game.playing = False
+                    """
         
         elif self.player_dead and not self.player_win:
             if not self.playing_song:
@@ -119,12 +124,13 @@ class MainMenu(State):
                     new_state = World(self.game)
                     new_state.enter_state()
                 elif self.index == 1:
+                    self.index = 0
                     self.player_win = False
                     self.player_dead = False
-                elif self.index == 2:
+                """elif self.index == 2:
                     pygame.mixer.music.stop()
-                    self.game.running = False
-                    self.game.playing = False
+                    #self.game.running = False
+                    #self.game.playing = False"""
 
             hovers = pygame.sprite.spritecollide(self.mouse, self.dead_buttons, False)
             self.hovered = None
@@ -136,11 +142,13 @@ class MainMenu(State):
                         new_state = World(self.game)
                         new_state.enter_state()
                     elif hover.key == "retmenu":
+                        self.index = 0
                         self.player_win = False
                         self.player_dead = False
-                    elif hover.key == "quitdesk":
-                        self.game.running = False
-                        self.game.playing = False
+                    """elif hover.key == "quitdesk":
+                        pass
+                        #self.game.running = False
+                        #self.game.playing = False"""
         
         elif not self.player_dead and self.player_win:
             if not self.playing_song:
@@ -155,12 +163,13 @@ class MainMenu(State):
                     new_state = World(self.game)
                     new_state.enter_state()
                 elif self.index == 1:
+                    self.index = 0
                     self.player_win = False
                     self.player_dead = False
-                elif self.index == 2:
+                """elif self.index == 2:
                     pygame.mixer.music.stop()
-                    self.game.running = False
-                    self.game.playing = False
+                    #self.game.running = False
+                    #self.game.playing = False"""
 
             hovers = pygame.sprite.spritecollide(self.mouse, self.replay_buttons, False)
             self.hovered = None
@@ -172,11 +181,13 @@ class MainMenu(State):
                         new_state = World(self.game)
                         new_state.enter_state()
                     elif hover.key == "retmenu":
+                        self.index = 0
                         self.player_win = False
                         self.player_dead = False
-                    elif hover.key == "quitdesk":
-                        self.game.running = False
-                        self.game.playing = False
+                    """elif hover.key == "quitdesk":
+                        pass
+                        #self.game.running = False
+                        #self.game.playing = False"""
 
         self.game.reset_keys()
 
